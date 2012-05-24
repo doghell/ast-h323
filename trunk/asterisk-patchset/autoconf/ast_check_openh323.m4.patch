@@ -1,0 +1,74 @@
+--- asterisk-svn_r367559/autoconf/ast_check_openh323.m4.orig	2012-05-24 15:57:35.000000000 +0600
++++ asterisk-svn_r367559/autoconf/ast_check_openh323.m4	2012-05-24 16:01:11.000000000 +0600
+@@ -74,56 +74,21 @@
+ AC_DEFUN([AST_CHECK_OPENH323_BUILD], [
+ 	if test "${HAS_OPENH323:-unset}" != "unset"; then
+ 		AC_MSG_CHECKING(OpenH323 build option)
+-		OPENH323_SUFFIX=
+-		prefixes="h323_${PWLIB_PLATFORM}_ h323_ openh323"
+-		for pfx in $prefixes; do
+-			#files=`ls -l /usr/local/lib/lib${pfx}*.so* 2>/dev/null`
+-			files=`ls -l ${OPENH323_LIBDIR}/lib${pfx}*.so* 2>/dev/null`
+-			if test -z "$files"; then
+-				# check the default location
+-				files=`ls -l /usr/local/lib/lib${pfx}*.so* 2>/dev/null`
+-			fi
+-			libfile=
+-			if test -n "$files"; then
+-				for f in $files; do
+-					if test -f $f -a ! -L $f; then
+-						libfile=`basename $f`
+-						break;
+-					fi
+-				done
+-			fi
+-			if test -n "$libfile"; then
+-				OPENH323_PREFIX=$pfx
+-				break;
+-			fi
+-		done
+-		if test "${libfile:-unset}" != "unset"; then
+-			OPENH323_SUFFIX=`eval "echo ${libfile} | sed -e 's/lib${OPENH323_PREFIX}\(@<:@^.@:>@*\)\..*/\1/'"`
+-		fi
+-		case "${OPENH323_SUFFIX}" in
+-			n)
+-				OPENH323_BUILD="notrace";;
+-			r)
+-				OPENH323_BUILD="opt";;
+-			d)
+-				OPENH323_BUILD="debug";;
+-			*)
+-				if test "${OPENH323_PREFIX:-undef}" = "openh323"; then
+-					notrace=`eval "grep NOTRACE ${OPENH323DIR}/openh323u.mak | grep = | sed -e 's/@<:@A-Z0-9_@:>@*@<:@ 	@:>@*=@<:@ 	@:>@*//'"`
+-					if test "x$notrace" = "x"; then
+-						notrace="0"
+-					fi
+-					if test "$notrace" -ne 0; then
+-						OPENH323_BUILD="notrace"
+-					else
+-						OPENH323_BUILD="opt"
+-					fi
+-					OPENH323_LIB="-l${OPENH323_PREFIX}"
+-				else
+-					OPENH323_BUILD="notrace"
+-				fi
+-				;;
+-		esac
++
++                OPENH323_PREFIX="h323_${PWLIB_PLATFORM}_"
++                OPENH323_SUFFIX=
++                files=`ls -l ${OPENH323_LIBDIR}/lib${OPENH323_PREFIX}_d.so* 2>/dev/null | wc -l 2>/dev/null`
++                if test $files -gt 0 ; then
++                        OPENH323_BUILD="debug"
++                        OPENH323_SUFFIX="_d"
++                else
++                        files=`ls -l ${OPENH323_LIBDIR}/lib${OPENH323_PREFIX}.so* 2>/dev/null | wc -l 2>/dev/null`
++                        if test $files -gt 0 ; then
++                                OPENH323_BUILD="opt"
++                        fi
++                fi
++                OPENH323_LIB="-l${OPENH323_PREFIX}${OPENH323_SUFFIX}"
++
+ 		AC_MSG_RESULT(${OPENH323_BUILD})
+ 
+ 		AC_SUBST([OPENH323_SUFFIX])
