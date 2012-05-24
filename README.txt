@@ -7,3 +7,6 @@ Build packages
 Install packages
 	cd [PACKAGE_NAME]
 	make install
+
+Questions?
+	d.kochmashev@gmail.com
