@@ -2,6 +2,11 @@
 
 SRC_BASE=`dirname $0`
 [ -f "${SRC_BASE}/$0" ] || SRC_BASE=`dirname $0`
+if [ -n "${1}" ]; then
+	BUILD_TYPE=debug
+else
+	BUILD_TYPE=opt
+fi
 
 export SPANDSPDIR="${SRC_BASE}/spandsp"
 export PTLIBDIR="${SRC_BASE}/ptlib"
@@ -28,4 +33,4 @@ cd "${SRC_BASE}/h323plus"
 	--disable-gnugk \
 	--enable-spandsp
 
-make opt
+make ${BUILD_TYPE}
