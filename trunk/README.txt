@@ -1,5 +1,5 @@
 Fetch package sources from official sites
-	./get.sh
+	./get.sh [PACKAGE_NAME [latest]]
 
 Build packages
 	./build.sh
