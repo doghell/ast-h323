@@ -1,11 +1,5 @@
 --- asterisk/configure.ac.orig	2012-06-21 15:24:31.000000000 +0600
-+++ asterisk/configure.ac	2012-06-21 16:45:35.000000000 +0600
-@@ -1,4 +1,4 @@
--# Process this file with autoconf to produce a configure script.
-+^# Process this file with autoconf to produce a configure script.
- #
- # Make sure we use autoconf 2.60 to generate the "configure" script,
- # in case we want to commit it. Other than that, version 2.59 is
++++ asterisk/configure.ac	2012-06-21 17:07:52.000000000 +0600
 @@ -1964,14 +1964,11 @@
  	if test -n "${PWLIB_DIR}"; then
  		PWLIBDIR="${PWLIB_DIR}"
