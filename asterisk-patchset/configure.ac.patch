@@ -1,30 +1,40 @@
---- configure.ac.orig	2012-06-20 17:54:27.000000000 +0600
-+++ configure.ac	2012-06-20 17:54:39.000000000 +0600
-@@ -1965,12 +1965,12 @@
+--- asterisk/configure.ac.orig	2012-06-21 15:24:31.000000000 +0600
++++ asterisk/configure.ac	2012-06-21 16:45:35.000000000 +0600
+@@ -1,4 +1,4 @@
+-# Process this file with autoconf to produce a configure script.
++^# Process this file with autoconf to produce a configure script.
+ #
+ # Make sure we use autoconf 2.60 to generate the "configure" script,
+ # in case we want to commit it. Other than that, version 2.59 is
+@@ -1964,14 +1964,11 @@
+ 	if test -n "${PWLIB_DIR}"; then
  		PWLIBDIR="${PWLIB_DIR}"
  	fi
++	AST_CHECK_PWLIB_PLATFORM()
  	AST_CHECK_PWLIB()
 -	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [1], [9], [2], [P[[WT]]LIB_VERSION])
 +	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [2], [8], [4], [P[[WT]]LIB_VERSION])
  
  	if test "${HAS_PWLIB:-unset}" != "unset"; then
- 		AST_CHECK_PWLIB_PLATFORM()
- 
+-		AST_CHECK_PWLIB_PLATFORM()
+-
 -		PLATFORM_PWLIB="pt_${PWLIB_PLATFORM}_r"
-+		PLATFORM_PWLIB="pt"
- 
+-
  		AST_CHECK_PWLIB_BUILD([PWLib], [PWLIB],
  			[Define if your system has the PWLib libraries.],
-@@ -1984,7 +1984,7 @@
+ 			[#include "ptlib.h"],
+@@ -1984,9 +1981,8 @@
  		OPENH323DIR="${OPENH323_DIR}"
  	fi
  	AST_CHECK_OPENH323()
 -	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [17], [3], [], [1], [19], [0])
 +	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [22], [0], [], [1], [24], [1])
  	AST_CHECK_OPENH323_BUILD()
- 	PLATFORM_OPENH323="h323_${PWLIB_PLATFORM}_${OPENH323_SUFFIX}"
+-	PLATFORM_OPENH323="h323_${PWLIB_PLATFORM}_${OPENH323_SUFFIX}"
  	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
-@@ -2263,7 +2263,7 @@
+ 		[Define if your system has the OpenH323 libraries.],
+ 		[#include "ptlib.h"
+@@ -2263,7 +2259,7 @@
  	touch makeopts.acbak
  fi
  
