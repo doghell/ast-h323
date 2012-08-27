@@ -8,6 +8,6 @@ PACKAGE_LIST=$1
 for PACKAGE in ${PACKAGE_LIST}; do
 	if [ -h "${PACKAGE}" ]; then
 		echo -e "\nBuilding '${PACKAGE}'...\n"
-		${SRC_BASE}/build_${PACKAGE}.sh opt ${HOME}
+		${SRC_BASE}/build_${PACKAGE}.sh debug ${HOME}
 	fi
 done

@@ -7,7 +7,13 @@ PACKAGE_LIST=$1
 
 for PACKAGE in ${PACKAGE_LIST}; do
 	if [ -h "${PACKAGE}" ]; then
-		echo -e "\nBuilding '${PACKAGE}'...\n"
-		${SRC_BASE}/build_${PACKAGE}.sh opt ${HOME}
+		echo -e "\nInstalling '${PACKAGE}'...\n"
+		if [ -x "${SRC_BASE}/install_${PACKAGE}.sh" ]; then
+			${SRC_BASE}/install_${PACKAGE}.sh
+		else
+			cd ${PACKAGE}
+			make install
+			cd ${SRC_BASE}
+		fi
 	fi
 done

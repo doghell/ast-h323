@@ -1,5 +1,5 @@
---- asterisk-svn_r367559/channels/h323/chan_h323.h.orig	2012-05-24 15:57:26.000000000 +0600
-+++ asterisk-svn_r367559/channels/h323/chan_h323.h	2012-05-24 16:01:11.000000000 +0600
+--- asterisk/channels/h323/chan_h323.h.orig	2012-08-27 11:33:39.000000000 +0600
++++ asterisk/channels/h323/chan_h323.h	2012-08-27 11:36:03.000000000 +0600
 @@ -31,6 +31,17 @@
  
  #include <arpa/inet.h>

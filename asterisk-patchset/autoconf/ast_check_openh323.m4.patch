@@ -1,5 +1,5 @@
---- asterisk/autoconf/ast_check_openh323.m4.orig	2012-06-21 15:24:01.000000000 +0600
-+++ asterisk/autoconf/ast_check_openh323.m4	2012-06-21 16:49:58.000000000 +0600
+--- asterisk/autoconf/ast_check_openh323.m4.orig	2012-08-27 11:34:04.000000000 +0600
++++ asterisk/autoconf/ast_check_openh323.m4	2012-08-27 11:36:03.000000000 +0600
 @@ -1,132 +1,49 @@
  AC_DEFUN([AST_CHECK_OPENH323], [
 -OPENH323_INCDIR=
