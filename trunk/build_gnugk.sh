@@ -13,6 +13,8 @@ export PTLIBDIR="${SRC_BASE}/ptlib"
 export H323PLUSDIR="${SRC_BASE}/h323plus"
 export PWLIBDIR=${PTLIBDIR}
 export OPENH323DIR=${H323PLUSDIR}
+export CFLAGS="-I${SRC_BASE}/libssh/include -I${SRC_BASE}/net-snmp/include"
+export LDFLAGS="-L${SRC_BASE}/libssh/build/src -L${SRC_BASE}/net-snmp/snmplib/.libs"
 
 [ -n "${2}" ] && INSTALL_PREFIX="--prefix=${2}"
         
