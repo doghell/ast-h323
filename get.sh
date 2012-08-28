@@ -5,7 +5,7 @@ SRC_BASE=`pwd`
 
 PACKAGE_LIST=$1
 if [ -z "${PACKAGE_LIST}" ]; then
-	PACKAGE_LIST=`cat tools package_list`
+	PACKAGE_LIST=`cat package_list`
 else
 	[ -n "${2}" ] && GET_LATEST="_latest"
 fi
