@@ -1,13 +1,14 @@
 Build and install everything automatically (basic package set)
-	./auto.sh
+	./auto-build.sh
+  OR
+	./auto-build-debug.sh
 
 Fetch package sources from official sites
 	./get.sh [PACKAGE_NAME [latest]]
 
 Build packages
 	./build.sh [PACKAGE_NAME]
-
-Build packages (debug versions)
+  OR
 	./build-debug.sh [PACKAGE_NAME]
 
 Install packages
