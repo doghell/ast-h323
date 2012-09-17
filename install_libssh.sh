@@ -5,4 +5,4 @@ SRC_BASE=`dirname $0`
 
 cd "${SRC_BASE}/libssh/build"
 
-make install
+gmake install

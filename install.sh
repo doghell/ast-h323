@@ -12,7 +12,7 @@ for PACKAGE in ${PACKAGE_LIST}; do
 			${SRC_BASE}/install_${PACKAGE}.sh
 		else
 			cd ${PACKAGE}
-			make install
+			gmake install
 			cd ${SRC_BASE}
 		fi
 	fi
