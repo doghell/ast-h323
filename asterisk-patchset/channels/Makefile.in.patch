@@ -1,6 +1,6 @@
---- asterisk/channels/Makefile.in.orig	2012-08-27 11:36:03.000000000 +0600
-+++ asterisk/channels/Makefile.in	2012-08-27 11:36:03.000000000 +0600
-@@ -0,0 +1,116 @@
+--- asterisk/channels/Makefile.in.orig	2012-09-14 13:02:04.000000000 +0600
++++ asterisk/channels/Makefile.in	2012-09-14 17:14:40.000000000 +0600
+@@ -0,0 +1,110 @@
 +#
 +# Asterisk -- A telephony toolkit for Linux.
 +# 
@@ -30,8 +30,8 @@
 +endif
 +
 +ifeq ($(OSARCH),FreeBSD)
-+  PTLIB=-lpt_FreeBSD_x86_r
-+  H323LIB=-lh323_FreeBSD_x86_r
++  PTLIB=-lpt@OPENH323_SUFFIX@
++  H323LIB=-lh323_FreeBSD_x86_@OPENH323_SUFFIX@
 +  CHANH323LIB=-pthread
 +endif
 +
@@ -67,10 +67,10 @@
 +clean::
 +	$(MAKE) -C misdn clean
 +	rm -f sip/*.o sip/*.i
-+	make -C h323 clean
++	gmake -C h323 clean
 +
 +dist-clean::
-+	make -C h323 dist-clean
++	gmake -C h323 dist-clean
 +	rm -f Makefile
 +
 +$(if $(filter chan_iax2,$(EMBEDDED_MODS)),modules.link,chan_iax2.so): iax2-parser.o iax2-provision.o
@@ -83,16 +83,10 @@
 +ifneq ($(filter chan_h323,$(EMBEDDED_MODS)),)
 +modules.link: h323/libchanh323.a
 +else
-+ifeq ($(OSARCH),linux-gnu)
 +chan_h323.so: chan_h323.o h323/libchanh323.a
 +	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
 +	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a"
 +	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a
-+else
-+chan_h323.so: chan_h323.o h323/libchanh323.a
-+	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
-+	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) -o $@ $< h323/libchanh323.a $(CHANH323LIB) -L$(PWLIBDIR)/lib $(PTLIB) -L$(OPENH323DIR)/lib $(H323LIB) -L/usr/lib -lcrypto -lssl -lexpat
-+endif
 +endif
 +
 +chan_misdn.o: _ASTCFLAGS+=-Imisdn
