@@ -1,6 +1,6 @@
---- asterisk/autoconf/ast_check_pwlib.m4.orig	2012-08-27 11:34:04.000000000 +0600
-+++ asterisk/autoconf/ast_check_pwlib.m4	2012-08-27 12:15:39.000000000 +0600
-@@ -1,200 +1,65 @@
+--- asterisk/autoconf/ast_check_pwlib.m4.orig	2012-09-14 13:01:10.000000000 +0600
++++ asterisk/autoconf/ast_check_pwlib.m4	2012-09-14 15:22:09.000000000 +0600
+@@ -1,200 +1,68 @@
  AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
 -PWLIB_OSTYPE=
 -case "$host_os" in
@@ -11,20 +11,22 @@
 +			PWLIB_OSTYPE=linux ;
    		;;
 -  freebsd* )       PWLIB_OSTYPE=FreeBSD ;
--  		;;
++		freebsd*)
++			PWLIB_OSTYPE=FreeBSD ;
+   		;;
 -  openbsd* )       PWLIB_OSTYPE=OpenBSD ;
 -				   ENDLDLIBS="-lossaudio" ;
--		;;
++		*)
++			PWLIB_OSTYPE="$host_os" ;
++			AC_MSG_WARN("OS $PWLIB_OSTYPE build is not supported - proceed with caution!") ;
+ 		;;
 -  netbsd* )        PWLIB_OSTYPE=NetBSD ;
 -				   ENDLDLIBS="-lossaudio" ;
 -		;;
 -  solaris* | sunos* ) PWLIB_OSTYPE=solaris ;
 -		;;
 -  darwin* )	       PWLIB_OSTYPE=Darwin ;
-+		*)
-+			PWLIB_OSTYPE="$host_os" ;
-+			AC_MSG_WARN("OS $PWLIB_OSTYPE build is not supported - proceed with caution!") ;
- 		;;
+-		;;
 -  beos*)           PWLIB_OSTYPE=beos ;
 -                   STDCCFLAGS="$STDCCFLAGS -D__BEOS__"
 -		;;
@@ -85,18 +87,18 @@
 -		   P_64BIT=1 ;
 -                   LIB64=1 ;
 -		   ;;
-+	esac
- 
+-
 -   ia64)	   PWLIB_MACHTYPE=ia64 ;
 -		   P_64BIT=1 ;
 -	  	   ;;
-+	PWLIB_PLATFORM="${PWLIB_OSTYPE}_${PWLIB_MACHTYPE}"
++	esac
  
 -   s390x)	   PWLIB_MACHTYPE=s390x ;
 -		   P_64BIT=1 ;
 -                   LIB64=1 ;
 -		   ;;
--
++	PWLIB_PLATFORM="${PWLIB_OSTYPE}_${PWLIB_MACHTYPE}"
+ 
 -   s390)	   PWLIB_MACHTYPE=s390 ;
 -		   ;;
 -
@@ -247,7 +249,7 @@
  	fi
  
  	if test "${HAS_$2:-unset}" != "unset"; then
-@@ -227,47 +92,55 @@
+@@ -227,47 +95,52 @@
  
  AC_DEFUN([AST_CHECK_PWLIB_BUILD], [
  	if test "${HAS_$2:-unset}" != "unset"; then
@@ -278,13 +280,10 @@
 +		saved_libs="${LIBS}"
  
 -	   AC_LANG_POP([C++])
-+         	if test "$2" == "PWLIB" ; then
-+         		$2_LIBDIR="${PWLIBDIR}/lib_${$2_PLATFORM}"
-+         		$2_PREFIX="pt"
-+         	elif test "$2" == "OPENH323" ; then
-+         		$2_LIBDIR="${OPENH323DIR}/lib"
-+         		$2_PREFIX="h323_${PWLIB_PLATFORM}_"
-+         	fi
++		PWLIB_LIBDIR="${PWLIBDIR}/lib_${PWLIB_PLATFORM}"
++		PWLIB_PREFIX="pt"
++		OPENH323_LIBDIR="${OPENH323DIR}/lib"
++		OPENH323_PREFIX="h323_${PWLIB_PLATFORM}_"
 +
 +		$2_SUFFIX=
 +		files=`ls -l ${$2_LIBDIR}/lib${$2_PREFIX}_d.so* 2>/dev/null | wc -l 2>/dev/null`

@@ -17,4 +17,4 @@ cd "${SRC_BASE}/ptlib"
 ./configure \
 	${INSTALL_PREFIX}
 
-make ${BUILD_TYPE}
+gmake ${BUILD_TYPE}

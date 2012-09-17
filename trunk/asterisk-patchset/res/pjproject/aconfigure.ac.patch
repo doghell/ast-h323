@@ -1,0 +1,21 @@
+--- asterisk/res/pjproject/aconfigure.ac.orig	2012-09-14 13:01:44.000000000 +0600
++++ asterisk/res/pjproject/aconfigure.ac	2012-09-17 12:06:54.000000000 +0600
+@@ -44,9 +44,15 @@
+ dnl #
+ dnl # Setup CROSS_COMPILE variable
+ dnl #
+-if test -z "$CROSS_COMPILE"; then 
+-    CROSS_COMPILE=`echo ${CC} | sed 's/gcc//'`
+-fi
++#
++# Section commented out because it produces strange result under FreeBSD 7.2
++#
++#if test -z "$CROSS_COMPILE"; then 
++#    CC_IS_GCC=`cc -v 2>&1 | grep "^gcc " | wc -l`
++#    if test "${CC_IS_GCC}" == "0"; then
++#        CROSS_COMPILE=${CC}
++#    fi
++#fi
+ 
+ if test "$AR" = ""; then AR="${CROSS_COMPILE}ar rv"; fi
+ AC_SUBST(AR)
