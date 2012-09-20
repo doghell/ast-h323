@@ -1,5 +1,5 @@
 [ -h asterisk ] && echo "Already exists" && exit
-if [ ! -d asterisk-10.8.0]; then
+if [ ! -d asterisk-10.8.0 ]; then
 	if [ ! -f asterisk-10.8.0.tar.gz ]; then
 		wget http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-10.8.0.tar.gz || exit 1
 	fi
