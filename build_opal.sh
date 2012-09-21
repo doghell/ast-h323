@@ -8,7 +8,6 @@ else
 	BUILD_TYPE=opt
 fi
 
-export PATH="${HOME}/bin:${PATH}"
 export PTLIBDIR="${SRC_BASE}/ptlib"
 export SPANDSPDIR="${SRC_BASE}/spandsp"
 export CXXFLAGS="-I${SPANDSPDIR}/src -I${PTLIBDIR}/include"
