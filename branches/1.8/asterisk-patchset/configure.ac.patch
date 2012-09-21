@@ -1,0 +1,39 @@
+--- asterisk/configure.ac.orig	2012-04-12 20:26:06.000000000 +0600
++++ asterisk/configure.ac	2012-09-21 11:08:01.000000000 +0600
+@@ -1922,14 +1922,11 @@
+ 	if test -n "${PWLIB_DIR}"; then
+ 		PWLIBDIR="${PWLIB_DIR}"
+ 	fi
++	AST_CHECK_PWLIB_PLATFORM()
+ 	AST_CHECK_PWLIB()
+-	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [1], [9], [2], [P[[WT]]LIB_VERSION])
++	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [2], [8], [4], [P[[WT]]LIB_VERSION])
+ 		
+ 	if test "${HAS_PWLIB:-unset}" != "unset"; then
+-		AST_CHECK_PWLIB_PLATFORM()
+-
+-		PLATFORM_PWLIB="pt_${PWLIB_PLATFORM}_r"
+-
+ 		AST_CHECK_PWLIB_BUILD([PWLib], [PWLIB],
+ 			[Define if your system has the PWLib libraries.],
+ 			[#include "ptlib.h"],
+@@ -1942,9 +1939,8 @@
+ 		OPENH323DIR="${OPENH323_DIR}"
+ 	fi
+ 	AST_CHECK_OPENH323()
+-	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [17], [3], [], [1], [19], [0])
++	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [22], [0], [], [1], [24], [1])
+ 	AST_CHECK_OPENH323_BUILD()
+-	PLATFORM_OPENH323="h323_${PWLIB_PLATFORM}_${OPENH323_SUFFIX}"
+ 	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
+ 		[Define if your system has the OpenH323 libraries.],
+ 		[#include "ptlib.h"
+@@ -2255,7 +2251,7 @@
+ 	touch makeopts.acbak
+ fi
+ 
+-AC_CONFIG_FILES([build_tools/menuselect-deps makeopts channels/h323/Makefile])
++AC_CONFIG_FILES([build_tools/menuselect-deps makeopts channels/Makefile channels/h323/Makefile])
+ AST_CHECK_MANDATORY
+ 
+ if test -f build_tools/menuselect-deps; then
