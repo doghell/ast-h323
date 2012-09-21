@@ -4,6 +4,7 @@ if [ ! -d asterisk-10.8.0 ]; then
 		wget http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-10.8.0.tar.gz || exit 1
 	fi
 	tar xvzf asterisk-10.8.0.tar.gz || exit 1
+	rm -vf asterisk-10.8.0/configure
 fi
 if [ -d asterisk-10.8.0 ]; then
 	ln -svnf asterisk-10.8.0 asterisk
