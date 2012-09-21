@@ -8,7 +8,6 @@ if [ "`uname`" == "FreeBSD" ]; then
 	export CFLAGS="-I/usr/local/include"
 	export LDFLAGS="-L/usr/local/lib"
 fi
-export PATH="${HOME}/bin:${PATH}"
 
 cd "${SRC_BASE}/spandsp"
 

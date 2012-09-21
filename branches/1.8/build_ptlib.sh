@@ -8,8 +8,6 @@ else
 	BUILD_TYPE=opt
 fi
 
-export PATH="${HOME}/bin:${PATH}"
-
 [ -n "${2}" ] && INSTALL_PREFIX="--prefix=${2}"
                         
 cd "${SRC_BASE}/ptlib"
