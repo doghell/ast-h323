@@ -1,5 +1,5 @@
---- asterisk/channels/h323/ast_h323.cxx.orig	2012-08-27 11:33:39.000000000 +0600
-+++ asterisk/channels/h323/ast_h323.cxx	2012-08-27 11:36:03.000000000 +0600
+--- asterisk/channels/h323/ast_h323.cxx.orig	2010-05-25 04:05:15.000000000 +0600
++++ asterisk/channels/h323/ast_h323.cxx	2012-09-21 11:15:10.000000000 +0600
 @@ -104,27 +104,17 @@
   */
  
@@ -206,7 +206,7 @@
  	for (int i = 0; i < remoteCapabilities.GetSize(); ++i) {
  		unsigned int subType = remoteCapabilities[i].GetSubType();
  		if (h323debug) {
-@@ -1789,7 +1787,10 @@
+@@ -1788,7 +1786,10 @@
  			}
  			break;
  		case H323Capability::e_Data:
@@ -218,7 +218,7 @@
  				pt = remoteCapabilities[i].GetPayloadType();
  				if ((dtmfMode & H323_DTMF_CISCO) != 0) {
  					on_set_rfc2833_payload(GetCallReference(), (const char *)GetCallToken(), (int)pt, 1);
-@@ -1807,6 +1808,7 @@
+@@ -1806,6 +1807,7 @@
  			if (!strcmp((const char *)remoteCapabilities[i].GetFormatName(), H323_UserInputCapability::SubTypeNames[H323_UserInputCapability::SignalToneRFC2833])) {
  				pt = remoteCapabilities[i].GetPayloadType();
  				if ((dtmfMode & H323_DTMF_RFC2833) != 0) {
@@ -226,10 +226,11 @@
  					on_set_rfc2833_payload(GetCallReference(), (const char *)GetCallToken(), (int)pt, 0);
  //					if (sendUserInputMode == SendUserInputAsTone)
  //						sendUserInputMode = SendUserInputAsInlineRFC2833;
-@@ -1848,13 +1850,45 @@
+@@ -1846,6 +1848,26 @@
+ 			break;
  		}
  	}
- 
++
 +	// <ACM31DTMFBug>
 +	if ((dtmfMode & H323_DTMF_RFC2833) != 0 && !remoteEndpointSupportsRFC2833)
 +	{
@@ -249,17 +250,10 @@
 +	}
 +	// </ACM31DTMFBug>
 +
-+	if (h323debug) {
-+		char caps_str[1024], caps2_str[1024];
-+		ast_codec_pref_string(&prefs, caps2_str, sizeof(caps2_str));
-+		struct ast_format_cap *format_cap = ast_format_cap_alloc();
-+		if (format_cap != NULL) {
-+			ast_format_cap_from_old_bitfield(format_cap, peer_capabilities);
-+			cout << "Peer capabilities = " << ast_getformatname_multiple(caps_str, sizeof(caps_str), format_cap)
-+				<< ", ordered list is " << caps2_str << endl;
-+			ast_format_cap_destroy(format_cap);
-+		}
-+	}
+ 	if (h323debug) {
+ 		char caps_str[1024], caps2_str[1024];
+ 		ast_codec_pref_string(&prefs, caps2_str, sizeof(caps2_str));
+@@ -1855,10 +1877,12 @@
  #if 0
  	redir_capabilities &= peer_capabilities;
  #endif
@@ -275,7 +269,7 @@
  }
  
  H323Channel * MyH323Connection::CreateRealTimeLogicalChannel(const H323Capability & capability,
-@@ -1866,8 +1900,18 @@
+@@ -1870,8 +1894,18 @@
  	/* Do not open tx channel when transmitter has been paused by empty TCS */
  	if ((dir == H323Channel::IsTransmitter) && transmitterSidePaused)
  		return NULL;
@@ -295,7 +289,7 @@
  }
  
  /** This callback function is invoked once upon creation of each
-@@ -1878,6 +1922,10 @@
+@@ -1882,6 +1916,10 @@
  	/* Increase the count of channels we have open */
  	channelsOpen++;
  
@@ -306,7 +300,7 @@
  	if (h323debug) {
  		cout << "\t-- Started logical channel: "
  				<< ((channel.GetDirection() == H323Channel::IsTransmitter) ? "sending " : ((channel.GetDirection() == H323Channel::IsReceiver) ? "receiving " : " "))
-@@ -1887,7 +1935,7 @@
+@@ -1891,7 +1929,7 @@
  	return connectionState != ShuttingDownConnection;
  }
  
@@ -315,7 +309,7 @@
  {
  	PINDEX lastcap = -1; /* last common capability index */
  	int alreadysent = 0;
-@@ -1978,6 +2026,9 @@
+@@ -1983,6 +2021,9 @@
  		}
  	}
  
@@ -325,7 +319,7 @@
  	cap = new H323_UserInputCapability(H323_UserInputCapability::HookFlashH245);
  	if (cap && cap->IsUsable(*this)) {
  		lastcap++;
-@@ -2070,6 +2121,22 @@
+@@ -2075,6 +2116,22 @@
  		controlChannel = NULL;
  		return FALSE;
  	}
@@ -348,7 +342,7 @@
  	if (!controlChannel->Connect()) {
  		PTRACE(1, "H225\tConnect of H245 failed: " << controlChannel->GetErrorText());
  		delete controlChannel;
-@@ -2122,6 +2189,344 @@
+@@ -2127,6 +2184,344 @@
  #endif
  }
  
@@ -693,7 +687,7 @@
  
  /* MyH323_ExternalRTPChannel */
  MyH323_ExternalRTPChannel::MyH323_ExternalRTPChannel(MyH323Connection & connection,
-@@ -2136,7 +2541,11 @@
+@@ -2141,7 +2536,11 @@
  	info = on_external_rtp_create(connection.GetCallReference(), (const char *)connection.GetCallToken());
  	if (!info) {
  		cout << "\tERROR: on_external_rtp_create failure" << endl;
@@ -706,7 +700,7 @@
  	} else {
  		localIpAddr = info->addr;
  		localPort = info->port;
-@@ -2160,29 +2569,33 @@
+@@ -2165,29 +2564,33 @@
  
  PBoolean MyH323_ExternalRTPChannel::Start(void)
  {
@@ -758,7 +752,7 @@
  }
  
  PBoolean MyH323_ExternalRTPChannel::OnReceivedAckPDU(const H245_H2250LogicalChannelAckParameters & param)
-@@ -2250,6 +2663,9 @@
+@@ -2255,6 +2658,9 @@
  
  void h323_end_point_create(void)
  {
@@ -768,7 +762,7 @@
  	channelsOpen = 0;
  	logstream = new PAsteriskLog();
  	PTrace::SetStream(logstream); 
-@@ -2288,7 +2704,6 @@
+@@ -2293,7 +2699,6 @@
  							rfc2833_cb				dtmffunc,
  							hangup_cb				hangupfunc,
  							setcapabilities_cb		capabilityfunc,
@@ -776,7 +770,7 @@
  							onhold_cb				holdfunc)
  {
  	on_incoming_call = ifunc;
-@@ -2304,14 +2719,18 @@
+@@ -2309,14 +2714,18 @@
  	on_set_rfc2833_payload = dtmffunc;
  	on_hangup = hangupfunc;
  	on_setcapabilities = capabilityfunc;
@@ -797,7 +791,7 @@
  {
  	MyH323Connection *conn;
  
-@@ -2330,12 +2749,115 @@
+@@ -2335,12 +2744,115 @@
  		cout << " ERROR: [h323_set_capabilities] Unable to find connection " << token << endl;
  		return 1;
  	}
@@ -914,7 +908,7 @@
  /** Start the H.323 listener */
  int h323_start_listener(int listenPort, struct sockaddr_in bindaddr)
  {
-@@ -2364,13 +2886,13 @@
+@@ -2369,13 +2881,13 @@
  /* Addition of functions just to make the channel driver compile with H323Plus */
  #if VERSION(OPENH323_MAJOR, OPENH323_MINOR, OPENH323_BUILD) > VERSION(1,19,4)
  /* Alternate RTP port information for Same NAT */
@@ -930,7 +924,7 @@
  {
  	return TRUE;
  }
-@@ -2381,7 +2903,7 @@
+@@ -2386,7 +2898,7 @@
  }
  
  /* Alternate RTP port information for Same NAT */
@@ -939,7 +933,7 @@
  {
  	return TRUE;
  }
-@@ -2507,7 +3029,6 @@
+@@ -2512,7 +3024,6 @@
    */
  int h323_make_call(char *dest, call_details_t *cd, call_options_t *call_options)
  {
@@ -947,7 +941,7 @@
  	PString	token;
  	PString	host(dest);
  
-@@ -2515,9 +3036,7 @@
+@@ -2520,9 +3031,7 @@
  		return 1;
  	}
  

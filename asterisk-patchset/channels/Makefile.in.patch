@@ -1,5 +1,5 @@
---- asterisk/channels/Makefile.in.orig	2012-09-14 13:02:04.000000000 +0600
-+++ asterisk/channels/Makefile.in	2012-09-14 17:14:40.000000000 +0600
+--- asterisk/channels/Makefile.in.orig	2012-09-21 11:08:01.000000000 +0600
++++ asterisk/channels/Makefile.in	2012-09-21 11:08:01.000000000 +0600
 @@ -0,0 +1,110 @@
 +#
 +# Asterisk -- A telephony toolkit for Linux.

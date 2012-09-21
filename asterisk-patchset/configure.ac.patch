@@ -1,6 +1,6 @@
---- asterisk/configure.ac.orig	2012-09-20 16:10:24.000000000 +0600
-+++ asterisk/configure.ac	2012-09-20 16:10:44.000000000 +0600
-@@ -2020,14 +2020,11 @@
+--- asterisk/configure.ac.orig	2012-04-12 20:26:06.000000000 +0600
++++ asterisk/configure.ac	2012-09-21 11:08:01.000000000 +0600
+@@ -1922,14 +1922,11 @@
  	if test -n "${PWLIB_DIR}"; then
  		PWLIBDIR="${PWLIB_DIR}"
  	fi
@@ -8,7 +8,7 @@
  	AST_CHECK_PWLIB()
 -	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [1], [9], [2], [P[[WT]]LIB_VERSION])
 +	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [2], [8], [4], [P[[WT]]LIB_VERSION])
- 
+ 		
  	if test "${HAS_PWLIB:-unset}" != "unset"; then
 -		AST_CHECK_PWLIB_PLATFORM()
 -
@@ -17,7 +17,7 @@
  		AST_CHECK_PWLIB_BUILD([PWLib], [PWLIB],
  			[Define if your system has the PWLib libraries.],
  			[#include "ptlib.h"],
-@@ -2040,9 +2037,8 @@
+@@ -1942,9 +1939,8 @@
  		OPENH323DIR="${OPENH323_DIR}"
  	fi
  	AST_CHECK_OPENH323()
@@ -28,7 +28,7 @@
  	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
  		[Define if your system has the OpenH323 libraries.],
  		[#include "ptlib.h"
-@@ -2319,7 +2315,7 @@
+@@ -2255,7 +2251,7 @@
  	touch makeopts.acbak
  fi
  

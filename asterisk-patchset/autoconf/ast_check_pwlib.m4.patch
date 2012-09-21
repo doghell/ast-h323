@@ -1,5 +1,5 @@
---- asterisk/autoconf/ast_check_pwlib.m4.orig	2012-09-14 13:01:10.000000000 +0600
-+++ asterisk/autoconf/ast_check_pwlib.m4	2012-09-14 15:22:09.000000000 +0600
+--- asterisk/autoconf/ast_check_pwlib.m4.orig	2011-05-03 16:57:16.000000000 +0600
++++ asterisk/autoconf/ast_check_pwlib.m4	2012-09-21 11:08:01.000000000 +0600
 @@ -1,200 +1,68 @@
  AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
 -PWLIB_OSTYPE=
