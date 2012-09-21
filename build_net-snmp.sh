@@ -11,8 +11,6 @@ else
 	NETSNMP_PDIR="${HOME}/run/net-snmp"
 fi
 
-export PATH="${HOME}/bin:${PATH}"
-
 cd "${SRC_BASE}/net-snmp"
 
 ./configure \
