@@ -4,7 +4,6 @@ SRC_BASE=`pwd`
 [ -f "${SRC_BASE}/$0" ] || SRC_BASE=`dirname $0`
 [ "${HOSTTYPE}" == "x86_64" ] && ARCH_SUFFIX="_64"
 
-export PATH="${HOME}/bin:${PATH}"
 export SPANDSPDIR="${SRC_BASE}/spandsp"
 export PWLIBDIR="${SRC_BASE}/ptlib"
 export OPENH323DIR="${SRC_BASE}/h323plus"
