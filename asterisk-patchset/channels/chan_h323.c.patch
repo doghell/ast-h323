@@ -1,5 +1,5 @@
---- asterisk/channels/chan_h323.c.orig	2012-01-14 21:23:32.000000000 +0600
-+++ asterisk/channels/chan_h323.c	2012-09-21 11:08:01.000000000 +0600
+--- chan_h323.c.orig	2012-01-14 21:23:32.000000000 +0600
++++ chan_h323.c	2012-09-24 19:50:55.000000000 +0600
 @@ -29,7 +29,7 @@
   *
   * \par See also
@@ -413,19 +413,18 @@
  static int update_state(struct oh323_pvt *pvt, int state, int signal)
  {
  	if (!pvt)
-@@ -1335,14 +1595,28 @@
+@@ -1335,14 +1595,26 @@
  		options->silenceSuppression = ast_true(v->value);
  	} else if (!strcasecmp(v->name, "progress_setup")) {
  		tmp = atoi(v->value);
 -		if ((tmp != 0) && (tmp != 1) && (tmp != 3) && (tmp != 8)) {
 +
-+		// Allowed values of Progress Indicator IE are:
-+		// 0 - don't set Progress Indicator
-+		// 1-5,8 - set Progress Indicator to this value
-+		// 16 - remove Progress Indicator IE
++		// Allowed values of Progress Description are:
++		// 0 - don't set Progress Description
++		// 1-5,8 - set Progress Description to this value
 +		// d.kochmashev@gmail.com
 +
-+		if ((tmp == 6) || (tmp == 7) || (tmp > 16)) {
++		if (tmp < 0 || tmp == 6 || tmp == 7 || tmp > 8) {
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d, assuming 0\n", v->value, v->name, v->lineno);
  			tmp = 0;
  		}
@@ -434,17 +433,16 @@
  		tmp = atoi(v->value);
 -		if ((tmp != 0) && (tmp != 1) && (tmp != 8)) {
 +
-+		// Allowed values of Progress Indicator IE are:
-+		// 0 - don't set Progress Indicator
-+		// 1-5,8 - set Progress Indicator to this value
-+		// 16 - remove Progress Indicator IE
++		// Allowed values of Progress Description are:
++		// 0 - don't set Progress Description
++		// 1-5,8 - set Progress Description to this value
 +		// d.kochmashev@gmail.com
 +
-+		if ((tmp == 6) || (tmp == 7) || (tmp > 16)) {
++		if (tmp < 0 || tmp == 6 || tmp == 7 || tmp > 8) {
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d, assuming 0\n", v->value, v->name, v->lineno);
  			tmp = 0;
  		}
-@@ -1364,6 +1638,19 @@
+@@ -1364,6 +1636,19 @@
  			options->tunnelOptions |= H323_TUNNEL_QSIG;
  		else
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d\n", v->value, v->name, v->lineno);
@@ -464,7 +462,7 @@
  	} else if (!strcasecmp(v->name, "hold")) {
  		if (!strcasecmp(v->value, "none"))
  			options->holdHandling = ~0;
-@@ -1431,7 +1718,6 @@
+@@ -1431,7 +1716,6 @@
  			} else {
  				struct ast_sockaddr tmp;
  
@@ -472,7 +470,7 @@
  				if (ast_get_ip(&tmp, v->value)) {
  					ASTOBJ_UNREF(user, oh323_destroy_user);
  					return NULL;
-@@ -1551,12 +1837,12 @@
+@@ -1551,12 +1835,12 @@
  			{
  				struct ast_sockaddr tmp;
  
@@ -486,7 +484,7 @@
  				ast_sockaddr_to_sin(&tmp, &peer->addr);
  			}
  		} else if (!strcasecmp(v->name, "port")) {
-@@ -2083,6 +2369,129 @@
+@@ -2083,6 +2367,129 @@
  	return;
  }
  
@@ -616,7 +614,7 @@
  /*! \brief
    *	Call-back function to signal asterisk that the channel has been answered
    * Returns nothing
-@@ -2480,16 +2889,17 @@
+@@ -2480,16 +2887,17 @@
  		ast_debug(1, "DTMF payload on %s set to %d\n", token, payload);
  }
  
@@ -637,7 +635,7 @@
  	pvt->peercapability = capabilities;
  	pvt->jointcapability = pvt->options.capability & capabilities;
  	if (prefs) {
-@@ -2512,7 +2922,32 @@
+@@ -2512,7 +2920,32 @@
  			}
  		}
  	}
@@ -670,7 +668,7 @@
  }
  
  static void set_local_capabilities(unsigned call_reference, const char *token)
-@@ -2520,19 +2955,39 @@
+@@ -2520,19 +2953,39 @@
  	struct oh323_pvt *pvt;
  	int capability, dtmfmode, pref_codec;
  	struct ast_codec_pref prefs;
@@ -712,7 +710,7 @@
  
  	if (h323debug) {
  		int i;
-@@ -2997,6 +3452,7 @@
+@@ -2997,6 +3450,7 @@
  				ast_log(LOG_WARNING, "Invalid address: %s\n", v->value);
  			} else {
  				memcpy(&bindaddr.sin_addr, hp->h_addr, sizeof(bindaddr.sin_addr));
@@ -720,7 +718,7 @@
  			}
  		} else if (!strcasecmp(v->name, "tos")) {	/* Needs to be removed in next release */
  			ast_log(LOG_WARNING, "The \"tos\" setting is deprecated in this version of Asterisk. Please change to \"tos_audio\".\n");
-@@ -3271,6 +3727,22 @@
+@@ -3271,6 +3725,22 @@
  	.update_peer = oh323_set_rtp_peer,
  };
  
@@ -743,7 +741,7 @@
  static enum ast_module_load_result load_module(void)
  {
  	int res;
-@@ -3325,6 +3797,8 @@
+@@ -3325,6 +3795,8 @@
  
  		ast_rtp_glue_register(&oh323_rtp_glue);
  
@@ -752,7 +750,7 @@
  		/* Register our callback functions */
  		h323_callback_register(setup_incoming_call,
  						setup_outgoing_call,
-@@ -3339,7 +3813,6 @@
+@@ -3339,7 +3811,6 @@
  						set_dtmf_payload,
  						hangup_connection,
  						set_local_capabilities,
@@ -760,7 +758,7 @@
  						remote_hold);
  		/* start the h.323 listener */
  		if (h323_start_listener(h323_signalling_port, bindaddr)) {
-@@ -3448,7 +3921,7 @@
+@@ -3448,7 +3919,7 @@
  	return 0;
  }
  
