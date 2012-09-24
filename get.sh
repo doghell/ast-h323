@@ -10,6 +10,8 @@ else
 	[ -n "${2}" ] && GET_LATEST="_latest"
 fi
 
+export PATH=${HOME}/bin:${PATH}
+
 for PACKAGE in ${PACKAGE_LIST}; do
 	if [ -x "${SRC_BASE}/get_${PACKAGE}${GET_LATEST}.sh" ]; then
 		echo -e "\nFetching '${PACKAGE}'...\n"
