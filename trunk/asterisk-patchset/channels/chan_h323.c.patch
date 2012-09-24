@@ -1,11 +1,11 @@
---- asterisk/channels/chan_h323.c.orig	2012-08-27 11:33:45.000000000 +0600
-+++ asterisk/channels/chan_h323.c	2012-08-27 11:36:03.000000000 +0600
+--- asterisk/channels/chan_h323.c.orig	2012-09-24 15:54:44.000000000 +0600
++++ asterisk/channels/chan_h323.c	2012-09-24 16:14:16.000000000 +0600
 @@ -29,16 +29,14 @@
   *
   * \par See also
   * \arg Config_h323
-- * \extref OpenH323 http://www.voxgratia.org/
-+ * \extref H.323+ http://www.h323plus.org/
+- * OpenH323 http://www.voxgratia.org/
++ * H.323+ http://www.h323plus.org/
   *
   * \ingroup channel_drivers
   */
