@@ -33,7 +33,7 @@ cd "${SRC_BASE}/h323plus"
 	--enable-h46018 \
 	${H460_19M} \
 	--enable-h46023 \
-	--enable-h460p \
+	--disable-h460p \
 	--disable-gnugk \
 	--enable-spandsp
 
