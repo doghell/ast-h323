@@ -20,7 +20,7 @@ for PACKAGE in ${PACKAGE_LIST}; do
 			for PATCH in `find ${SRC_BASE}/${PACKAGE}/ -name "*.patch"`; do
 				ORIGINAL=`echo ${PATCH} | sed -r 's/\.patch$//'`
 				[ -f "${ORIGINAL}" ] || touch ${ORIGINAL}
-				patch -bNp0 ${ORIGINAL} < ${PATCH} || exit 1
+				patch -bENp0 ${ORIGINAL} < ${PATCH} || exit 1
 			done
 		fi
 		touch "${SRC_BASE}/${PACKAGE}/.patchset_applied"
