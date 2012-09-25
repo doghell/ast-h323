@@ -1,0 +1,2987 @@
+Index: channels/h323/Makefile.in
+===================================================================
+--- channels/h323/Makefile.in	(revision 373402)
++++ channels/h323/Makefile.in	(working copy)
+@@ -4,46 +4,28 @@
+ # Make file for OpenH323 support layer
+ #
+ 
+-.PHONY: Makefile.ast clean
++.PHONY:		Makefile.ast
+ 
+-default::	@OPENH323_BUILD@
+-
+-# Verify those options with main Makefile
+-STDCCFLAGS	= -DNDEBUG
++STDCCFLAGS      := -DPTRACING
+ STDCCFLAGS	+= -I../../include -include ../../include/asterisk/autoconfig.h
+ STDCCFLAGS	+= -fPIC
+-#OPTCCFLAGS	+=
+-CFLAGS		= -pipe
+-TARGET		= libchanh323.a
+-TARGET		+= Makefile.ast
+-SOURCES		= ast_h323.cxx compat_h323.cxx cisco-h225.cxx caps_h323.cxx
+-OBJDIR		= .
+-OBJS		=
++CFLAGS		= -pipe -fexceptions
++SOURCES		:= ast_h323.cxx compat_h323.cxx cisco-h225.cxx caps_h323.cxx
++OBJDIR		:= obj_linux_x86@OPENH323_SUFFIX@
++OBJS		:= ast_h323.o compat_h323.o cisco-h225.o caps_h323.o
++BUILD_TYPE	:= @OPENH323_BUILD@
++ifeq ($(BUILD_TYPE),debug)
++DEBUG		:= 1
++endif
+ 
+ ifndef OPENH323DIR
+ OPENH323DIR=@OPENH323DIR@
+ endif
+ 
+-ifneq ($(wildcard $(OPENH323DIR)/openh323u.mak),)
+-include $(OPENH323DIR)/openh323u.mak
+-endif
++libchanh323.a:	Makefile.ast $(addprefix $(OBJDIR)/,$(OBJS))
++	gmake @OPENH323_BUILD@
++	ar crv $@ $(OBJDIR)/*.o
+ 
+-notrace::
+-	$(MAKE) NOTRACE=1 opt
+-
+-$(SOURCES)::	Makefile ../../Makefile
+-	touch $@
+-
+-libchanh323.a:	$(OBJS)
+-	ar crv $@ $(OBJS)
+-
+-# 
+-# We have this file in svn, so this is commented out to ensure it doesn't try
+-# to run implicitly.  However, it's still here for reference.
+-#
+-#cisco-h225.cxx::	cisco-h225.asn
+-#	asnparser -m CISCO_H225 -c $<
+-
+ Makefile.ast:
+ 	@echo H323CFLAGS  = $(STDCCFLAGS) $(OPTCCFLAGS) $(CFLAGS) >$@.tmp
+ 	@echo H323LDFLAGS = $(CFLAGS) $(LDFLAGS) >>$@.tmp
+@@ -51,3 +33,10 @@
+ 	@if [ -r $@ ] && cmp -s $@ $@.tmp; then rm -f $@.tmp; else mv -f $@.tmp $@; fi
+ 
+ clean::
++	rm -vf libchanh323.a
++	rm -vf Makefile.ast
++
++dist-clean::
++	rm -vf Makefile
++
++include $(OPENH323DIR)/openh323u.mak
+Index: channels/h323/caps_h323.cxx
+===================================================================
+--- channels/h323/caps_h323.cxx	(revision 373402)
++++ channels/h323/caps_h323.cxx	(working copy)
+@@ -3,6 +3,7 @@
+ #include <h245.h>
+ #include "ast_h323.h"
+ #include "caps_h323.h"
++#include "chan_h323.h"
+ 
+ #define DEFINE_G711_CAPABILITY(cls, code, capName) \
+ class cls : public AST_G711Capability { \
+@@ -16,9 +17,9 @@
+ H323_REGISTER_CAPABILITY(AST_G7231Capability, OPAL_G7231);
+ H323_REGISTER_CAPABILITY(AST_G729Capability,  OPAL_G729);
+ H323_REGISTER_CAPABILITY(AST_G729ACapability, OPAL_G729A);
+-H323_REGISTER_CAPABILITY(AST_GSM0610Capability, OPAL_GSM0610);
+-H323_REGISTER_CAPABILITY(AST_CiscoG726Capability, CISCO_G726r32);
+-H323_REGISTER_CAPABILITY(AST_CiscoDtmfCapability, CISCO_DTMF_RELAY);
++//H323_REGISTER_CAPABILITY(AST_GSM0610Capability, OPAL_GSM0610);
++//H323_REGISTER_CAPABILITY(AST_CiscoG726Capability, CISCO_G726r32);
++//H323_REGISTER_CAPABILITY(AST_CiscoDtmfCapability, CISCO_DTMF_RELAY);
+ 
+ OPAL_MEDIA_FORMAT_DECLARE(OpalG711ALaw64kFormat,
+ 	OPAL_G711_ALAW_64K,
+@@ -381,3 +382,199 @@
+ {
+ 	return PString(CISCO_DTMF_RELAY);
+ }
++
++/* Asterisk T.38 Capability */
++AST_T38Capability::AST_T38Capability(const struct t38_profile *profile) : H323_T38Capability(H323_T38Capability::e_UDP)
++{
++	SetProfile(profile);
++}
++
++PObject *AST_T38Capability::Clone() const
++{
++	return new AST_T38Capability(*this);
++}
++
++H323Channel *AST_T38Capability::CreateChannel(H323Connection &connection,
++				              H323Channel::Directions direction, unsigned sessionID,
++            				      const H245_H2250LogicalChannelParameters *param) const
++{
++	return new MyT38Channel(connection, *this, direction, sessionID);
++}
++
++void AST_T38Capability::SetProfile(const struct t38_profile* profile)
++{
++	m_profile.IncludeOptionalField(H245_T38FaxProfile::e_t38FaxUdpOptions);
++	m_profile.m_fillBitRemoval = profile->ast.fill_bit_removal;
++	m_profile.m_transcodingJBIG = profile->ast.transcoding_jbig;
++	m_profile.m_transcodingMMR = profile->ast.transcoding_mmr;
++	m_profile.m_version = profile->ast.version;
++
++	switch (profile->ast.rate_management) {
++	case AST_T38_RATE_MANAGEMENT_LOCAL_TCF:
++		m_profile.m_t38FaxRateManagement.SetTag(H245_T38FaxRateManagement::e_localTCF);
++		break;
++	case AST_T38_RATE_MANAGEMENT_TRANSFERRED_TCF:
++		m_profile.m_t38FaxRateManagement.SetTag(H245_T38FaxRateManagement::e_transferredTCF);
++		break;
++	default:
++		break;	
++	}
++
++	if (profile->max_datagram) {
++	        m_profile.m_t38FaxUdpOptions.IncludeOptionalField(H245_T38FaxUdpOptions::e_t38FaxMaxDatagram);
++		m_profile.m_t38FaxUdpOptions.m_t38FaxMaxDatagram = profile->max_datagram;
++	} else
++		m_profile.m_t38FaxUdpOptions.RemoveOptionalField(H245_T38FaxUdpOptions::e_t38FaxMaxDatagram);
++
++	switch (profile->error_correction_scheme) {
++	case UDPTL_ERROR_CORRECTION_REDUNDANCY:
++		m_profile.m_t38FaxUdpOptions.m_t38FaxUdpEC.SetTag(H245_T38FaxUdpOptions_t38FaxUdpEC::e_t38UDPRedundancy);
++		break;
++	case UDPTL_ERROR_CORRECTION_FEC:
++		m_profile.m_t38FaxUdpOptions.m_t38FaxUdpEC.SetTag(H245_T38FaxUdpOptions_t38FaxUdpEC::e_t38UDPFEC);
++		break;
++	default:
++		break;	
++	}
++
++	switch (profile->ast.rate) {
++	case AST_T38_RATE_2400:
++		m_bit_rate = 24;
++		break;
++	case AST_T38_RATE_4800:
++		m_bit_rate = 48;
++		break;
++        case AST_T38_RATE_7200:
++		m_bit_rate = 72;
++		break;
++	case AST_T38_RATE_9600:
++		m_bit_rate = 96;
++		break;
++        case AST_T38_RATE_12000:
++		m_bit_rate = 120;
++		break;
++        case AST_T38_RATE_14400:
++		m_bit_rate = 144;
++		break;
++	default:
++		break;
++	}
++}
++
++void AST_T38Capability::GetProfile(struct t38_profile* profile) const
++{
++	memset(profile, 0, sizeof(*profile));
++	
++	profile->ast.fill_bit_removal = m_profile.m_fillBitRemoval;
++	profile->ast.transcoding_jbig = m_profile.m_transcodingJBIG;
++	profile->ast.transcoding_mmr = m_profile.m_transcodingMMR;
++	profile->ast.version = m_profile.m_version;
++
++	switch (m_profile.m_t38FaxRateManagement.GetTag()) {
++	case H245_T38FaxRateManagement::e_localTCF:
++		profile->ast.rate_management = AST_T38_RATE_MANAGEMENT_LOCAL_TCF;
++		break;
++	case H245_T38FaxRateManagement::e_transferredTCF:
++		profile->ast.rate_management = AST_T38_RATE_MANAGEMENT_TRANSFERRED_TCF;
++		break;
++	default:
++		break;	
++	}
++
++	if (m_profile.m_t38FaxUdpOptions.HasOptionalField(H245_T38FaxUdpOptions::e_t38FaxMaxDatagram))
++		profile->max_datagram = m_profile.m_t38FaxUdpOptions.m_t38FaxMaxDatagram;
++
++	switch (m_profile.m_t38FaxUdpOptions.m_t38FaxUdpEC.GetTag()) {
++	case H245_T38FaxUdpOptions_t38FaxUdpEC::e_t38UDPRedundancy:
++		profile->error_correction_scheme = UDPTL_ERROR_CORRECTION_REDUNDANCY;
++		break;
++	case H245_T38FaxUdpOptions_t38FaxUdpEC::e_t38UDPFEC:
++		profile->error_correction_scheme = UDPTL_ERROR_CORRECTION_FEC;
++		break;
++	default:
++		break;	
++	}
++
++	switch (m_bit_rate) {
++	case 24:
++		profile->ast.rate = AST_T38_RATE_2400;
++		break;
++	case 48:
++		profile->ast.rate = AST_T38_RATE_4800;
++		break;
++        case 72:
++		profile->ast.rate = AST_T38_RATE_7200;
++		break;
++	case 96:
++		profile->ast.rate = AST_T38_RATE_9600;
++		break;
++        case 120:
++		profile->ast.rate = AST_T38_RATE_12000;
++		break;
++        case 144:
++		profile->ast.rate = AST_T38_RATE_14400;
++		break;
++	default:
++		break;
++	}
++}
++
++PBoolean AST_T38Capability::OnSendingPDU(H245_DataApplicationCapability & pdu) const
++{
++	PTRACE(3, "ASTH323T38\tOnSendingPDU for capability");
++
++	pdu.m_maxBitRate = m_bit_rate;
++	pdu.m_application.SetTag(H245_DataApplicationCapability_application::e_t38fax);
++	H245_DataApplicationCapability_application_t38fax & fax = pdu.m_application;
++	fax.m_t38FaxProtocol.SetTag(H245_DataProtocolCapability::e_udp);
++	fax.m_t38FaxProfile = m_profile;
++
++	return TRUE;
++}
++
++PBoolean AST_T38Capability::OnSendingPDU(H245_DataMode & pdu) const
++{
++	PTRACE(3, "ASTH323T38\tOnSendingPDU for capability");
++
++	pdu.m_bitRate = m_bit_rate;
++	pdu.m_application.SetTag(H245_DataMode_application::e_t38fax);
++	H245_DataMode_application_t38fax & fax = pdu.m_application;
++	fax.m_t38FaxProtocol.SetTag(H245_DataProtocolCapability::e_udp);
++	fax.m_t38FaxProfile = m_profile;
++
++	return TRUE;
++}
++
++PBoolean AST_T38Capability::OnReceivedPDU(const H245_DataApplicationCapability & pdu)
++{
++        if (pdu.m_application.GetTag() != H245_DataApplicationCapability_application::e_t38fax)
++		return FALSE;
++
++	const H245_DataApplicationCapability_application_t38fax & fax = pdu.m_application;
++	const H245_DataProtocolCapability & proto = fax.m_t38FaxProtocol;
++
++	if (proto.GetTag() != H245_DataProtocolCapability::e_udp)
++		return FALSE;
++
++	m_bit_rate = pdu.m_maxBitRate;
++	m_profile = fax.m_t38FaxProfile;
++
++	return TRUE;
++}
++
++PBoolean AST_T38Capability::OnReceivedPDU(const H245_DataMode & pdu)
++{
++        if (pdu.m_application.GetTag() != H245_DataApplicationCapability_application::e_t38fax)
++		return FALSE;
++
++	const H245_DataMode_application_t38fax & fax = pdu.m_application;
++	const H245_DataProtocolCapability & proto = fax.m_t38FaxProtocol;
++
++	if (proto.GetTag() != H245_DataProtocolCapability::e_udp)
++		return FALSE;
++
++	m_bit_rate = pdu.m_bitRate;
++	m_profile = fax.m_t38FaxProfile;
++
++	return TRUE;
++}
+Index: channels/h323/ast_h323.cxx
+===================================================================
+--- channels/h323/ast_h323.cxx	(revision 373402)
++++ channels/h323/ast_h323.cxx	(working copy)
+@@ -104,27 +104,17 @@
+  */
+ 
+ /* PWlib Required Components  */
+-#if VERSION(OPENH323_MAJOR, OPENH323_MINOR, OPENH323_BUILD) > VERSION(1,19,4)
+-#define MAJOR_VERSION 1
+-#define MINOR_VERSION 19
+-#define BUILD_TYPE    ReleaseCode
+-#define BUILD_NUMBER  6
+-#else
+-#define MAJOR_VERSION 1
++#define MAJOR_VERSION 2
+ #define MINOR_VERSION 0
+ #define BUILD_TYPE    ReleaseCode
+ #define BUILD_NUMBER  0
+-#endif
+  
+-const char *h323manufact = "The NuFone Networks";
+-const char *h323product  = "H.323 Channel Driver for Asterisk";
+- 
+-PDECLARE_PROCESS(MyProcess,PProcess,h323manufact,h323product,MAJOR_VERSION,MINOR_VERSION,BUILD_TYPE,BUILD_NUMBER)
+-static MyProcess localProcess;  // active for the life of the DLL
+-/* void MyProcess::Main()
+-{
+-}
+-*/
++const char *h323manufact = "Community modified";
++const char *h323product  = "H.323+ channel driver";
++
++PDECLARE_PROCESS(MyProcess,PLibraryProcess,h323manufact,h323product,MAJOR_VERSION,MINOR_VERSION,BUILD_TYPE,BUILD_NUMBER)
++static MyProcess *localProcess = NULL;
++
+ ////////////////////////////////////////////////
+ 
+ 
+@@ -142,26 +132,31 @@
+ static int _timerChangePipe[2];
+ #endif
+ 
+-static unsigned traceOptions = PTrace::Timestamp | PTrace::Thread | PTrace::FileAndLine;
++static unsigned traceOptions = PTrace::FileAndLine | PTrace::Blocks;
+ 
+ class PAsteriskLog : public PObject, public iostream {
+ 	PCLASSINFO(PAsteriskLog, PObject);
+ 
+-	public:
++public:
+ 	PAsteriskLog() : iostream(cout.rdbuf()) { init(&buffer); }
+ 	~PAsteriskLog() { flush(); }
+ 
+-	private:
++private:
+ 	PAsteriskLog(const PAsteriskLog &) : iostream(cout.rdbuf()) { }
+ 	PAsteriskLog & operator=(const PAsteriskLog &) { return *this; }
+ 
+ 	class Buffer : public streambuf {
+-		public:
++	public:
+ 		virtual int overflow(int=EOF);
+ 		virtual int underflow();
+ 		virtual int sync();
+ 		PString string;
++	private:
++		// ...for thread safety.
++		// d.kochmashev@gmail.com
++		PTimedMutex m_bufferMutex;
+ 	} buffer;
++
+ 	friend class Buffer;
+ };
+ 
+@@ -169,9 +164,12 @@
+ 
+ int PAsteriskLog::Buffer::overflow(int c)
+ {
++	m_bufferMutex.Wait();
++
+ 	if (pptr() >= epptr()) {
+ 		int ppos = pptr() - pbase();
+-		char *newptr = string.GetPointer(string.GetSize() + 2000);
++		string.SetSize(string.GetSize() + 4096);
++		char *newptr = string.GetPointer(string.GetSize() + 4096);
+ 		setp(newptr, newptr + string.GetSize() - 1);
+ 		pbump(ppos);
+ 	}
+@@ -179,6 +177,9 @@
+ 		*pptr() = (char)c;
+ 		pbump(1);
+ 	}
++
++	m_bufferMutex.Signal();
++
+ 	return 0;
+ }
+ 
+@@ -189,27 +190,18 @@
+ 
+ int PAsteriskLog::Buffer::sync()
+ {
+-	char *str = ast_strdup(string);
+-	char *s, *s1;
+-	char c;
++	m_bufferMutex.Wait();
+ 
+-	/* Pass each line with different ast_verbose() call */
+-	for (s = str; s && *s; s = s1) {
+-		s1 = strchr(s, '\n');
+-		if (!s1)
+-			s1 = s + strlen(s);
+-		else
+-			s1++;
+-		c = *s1;
+-		*s1 = '\0';
+-		ast_verbose("%s", s);
+-		*s1 = c;
+-	}
+-	ast_free(str);
++	PStringArray logStrings = string.Lines();
++	for (PINDEX i = 0; i < logStrings.GetSize(); i++)
++		ast_verbose("%s\n", logStrings[i].GetPointer());
+ 
+-	string = PString();
+-	char *base = string.GetPointer(2000);
++	string.MakeEmpty();
++	char *base = string.GetPointer();
+ 	setp(base, base + string.GetSize() - 1);
++
++	m_bufferMutex.Signal();
++
+ 	return 0;
+ }
+ 
+@@ -260,6 +252,10 @@
+ 
+ 	/* Reset call setup timeout to some more reasonable value than 1 minute */
+ 	signallingChannelCallTimeout = PTimeInterval(0, 0, 10);	/* 10 minutes */
++	
++	/* By default disable Round Trip Delay calculation procedure
++	   d.kochmashev@gmail.com */
++	roundTripDelayRate.SetInterval(0);
+ }
+ 
+ /** The fullAddress parameter is used directly in the MakeCall method so
+@@ -269,13 +265,11 @@
+   *					transport = ip.
+   *					port = 1720.
+   */
+-int MyH323EndPoint::MyMakeCall(const PString & dest, PString & token, void *_callReference, void *_opts)
++int MyH323EndPoint::MyMakeCall(const PString & dest, struct call_details *cd, struct call_options *opts)
+ {
+ 	PString fullAddress;
+ 	MyH323Connection * connection;
+ 	H323Transport *transport = NULL;
+-	unsigned int *callReference = (unsigned int *)_callReference;
+-	call_options_t *opts = (call_options_t *)_opts;
+ 
+ 	/* Determine whether we are using a gatekeeper or not. */
+ 	if (GetGatekeeper()) {
+@@ -306,18 +300,21 @@
+ 				cout << "Unable to get address and port" << endl;
+ 		}
+ 	}
++	PString token;
+ 	if (!(connection = (MyH323Connection *)H323EndPoint::MakeCallLocked(fullAddress, token, opts, transport))) {
+ 		if (h323debug) {
+ 			cout << "Error making call to \"" << fullAddress << '"' << endl;
+ 		}
+ 		return 1;
+ 	}
+-	*callReference = connection->GetCallReference();
++	connection->SetCallOptions(opts, false);
++	cd->call_reference = connection->GetCallReference();
++	memcpy(cd->call_token, (const unsigned char *)token, token.GetLength());
+ 
+ 	if (h323debug) {
+ 		cout << "\t-- " << GetLocalUserName() << " is calling host " << fullAddress << endl;
+ 		cout << "\t-- Call token is " << (const char *)token << endl;
+-		cout << "\t-- Call reference is " << *callReference << endl;
++		cout << "\t-- Call reference is " << cd->call_reference << endl;
+ #ifdef PTRACING
+ 		cout << "\t-- DTMF Payload is " << connection->dtmfCodec << endl;
+ #endif
+@@ -1694,7 +1691,6 @@
+ 			if (cap.GetTag() == H245_Capability::e_receiveRTPAudioTelephonyEventCapability) {
+ 				H245_AudioTelephonyEventCapability & atec = cap;
+ 				atec.m_dynamicRTPPayloadType = dtmfCodec[0];
+-//				on_set_rfc2833_payload(GetCallReference(), (const char *)GetCallToken(), (int)dtmfCodec[0]);
+ #ifdef PTRACING
+ 				if (h323debug) {
+ 					cout << "\t-- Receiving RFC2833 on payload " <<
+@@ -1752,6 +1748,7 @@
+ #endif
+ 	struct ast_codec_pref prefs;
+ 	RTP_DataFrame::PayloadTypes pt;
++	bool remoteEndpointSupportsRFC2833 = false;
+ 
+ 	if (!H323Connection::OnReceivedCapabilitySet(remoteCaps, muxCap, reject)) {
+ 		return FALSE;
+@@ -1759,6 +1756,7 @@
+ 
+ 	memset(&prefs, 0, sizeof(prefs));
+ 	int peer_capabilities = 0;
++	const AST_T38Capability* t38Cap = NULL;
+ 	for (int i = 0; i < remoteCapabilities.GetSize(); ++i) {
+ 		unsigned int subType = remoteCapabilities[i].GetSubType();
+ 		if (h323debug) {
+@@ -1789,7 +1787,10 @@
+ 			}
+ 			break;
+ 		case H323Capability::e_Data:
+-			if (!strcmp((const char *)remoteCapabilities[i].GetFormatName(), CISCO_DTMF_RELAY)) {
++			t38Cap = dynamic_cast<const AST_T38Capability*>(&remoteCapabilities[i]);
++			if (t38Cap)
++				break;
++			else if (!strcmp((const char *)remoteCapabilities[i].GetFormatName(), CISCO_DTMF_RELAY)) {
+ 				pt = remoteCapabilities[i].GetPayloadType();
+ 				if ((dtmfMode & H323_DTMF_CISCO) != 0) {
+ 					on_set_rfc2833_payload(GetCallReference(), (const char *)GetCallToken(), (int)pt, 1);
+@@ -1807,6 +1808,7 @@
+ 			if (!strcmp((const char *)remoteCapabilities[i].GetFormatName(), H323_UserInputCapability::SubTypeNames[H323_UserInputCapability::SignalToneRFC2833])) {
+ 				pt = remoteCapabilities[i].GetPayloadType();
+ 				if ((dtmfMode & H323_DTMF_RFC2833) != 0) {
++					remoteEndpointSupportsRFC2833 = true;
+ 					on_set_rfc2833_payload(GetCallReference(), (const char *)GetCallToken(), (int)pt, 0);
+ //					if (sendUserInputMode == SendUserInputAsTone)
+ //						sendUserInputMode = SendUserInputAsInlineRFC2833;
+@@ -1848,13 +1850,45 @@
+ 		}
+ 	}
+ 
++	// <ACM31DTMFBug>
++	if ((dtmfMode & H323_DTMF_RFC2833) != 0 && !remoteEndpointSupportsRFC2833)
++	{
++		// Avaya Communication Manager RFC2833 bug workaround.
++		// ACM, when set to use DTMF over IP: rtp-payload, doesn't include receiveRTPAudioTelephonyEventCapability in it's TCS.
++		// If chan_h323 detects ACM on the other side it will try to use DTMF transport as set in dtmfmode config option.
++		// d.kochmashev@gmail.com
++
++		const PStringArray rmtAppInfo = GetRemoteApplication().Tokenise("\t");
++		if (rmtAppInfo[0] == "Avaya Multivantage")
++		{
++			if (h323debug)
++				cout << "\t-- Avaya Communication Manager detected - " << 
++					"assuming RFC2833 NTE support with PT=" << (int)dtmfCodec[0] << endl;
++			on_set_rfc2833_payload(GetCallReference(), (const char *)GetCallToken(), (int)dtmfCodec[0], 0);
++		}
++	}
++	// </ACM31DTMFBug>
++
++	if (h323debug) {
++		char caps_str[1024], caps2_str[1024];
++		ast_codec_pref_string(&prefs, caps2_str, sizeof(caps2_str));
++		struct ast_format_cap *format_cap = ast_format_cap_alloc();
++		if (format_cap != NULL) {
++			ast_format_cap_from_old_bitfield(format_cap, peer_capabilities);
++			cout << "Peer capabilities = " << ast_getformatname_multiple(caps_str, sizeof(caps_str), format_cap)
++				<< ", ordered list is " << caps2_str << endl;
++			ast_format_cap_destroy(format_cap);
++		}
++	}
+ #if 0
+ 	redir_capabilities &= peer_capabilities;
+ #endif
+-	if (on_setpeercapabilities)
+-		on_setpeercapabilities(GetCallReference(), (const char *)callToken, peer_capabilities, &prefs);
+ 
+-	return TRUE;
++	struct t38_profile t38profile;
++	if (t38Cap)
++		t38Cap->GetProfile(&t38profile);
++
++	return set_peer_capabilities(GetCallReference(), (const char *)callToken, peer_capabilities, &prefs, t38Cap ? &t38profile : NULL) == 0;
+ }
+ 
+ H323Channel * MyH323Connection::CreateRealTimeLogicalChannel(const H323Capability & capability,
+@@ -1866,8 +1900,18 @@
+ 	/* Do not open tx channel when transmitter has been paused by empty TCS */
+ 	if ((dir == H323Channel::IsTransmitter) && transmitterSidePaused)
+ 		return NULL;
++		
++	MyH323_ExternalRTPChannel *externalRtpChannel = NULL;
+ 
+-	return new MyH323_ExternalRTPChannel(*this, capability, dir, sessionID);
++	// Try to create MyH323_ExternalRTPChannel instance catching exceptions.
++	// d.kochmashev@gmail.com
++	try {
++		externalRtpChannel = new MyH323_ExternalRTPChannel(*this, capability, dir, sessionID);
++	} catch(MyH323_ExternalRTPChannel::RTPChannelCreationError) {
++		delete externalRtpChannel;
++		return NULL;
++	}
++	return externalRtpChannel;
+ }
+ 
+ /** This callback function is invoked once upon creation of each
+@@ -1878,6 +1922,10 @@
+ 	/* Increase the count of channels we have open */
+ 	channelsOpen++;
+ 
++	// Hack to make InternalEstablishedConnectionCheck not to automatically call OnSelectLogicalChannels
++	// d.kochmashev@gmail.com
++	earlyStart = FALSE;
++
+ 	if (h323debug) {
+ 		cout << "\t-- Started logical channel: "
+ 				<< ((channel.GetDirection() == H323Channel::IsTransmitter) ? "sending " : ((channel.GetDirection() == H323Channel::IsReceiver) ? "receiving " : " "))
+@@ -1887,7 +1935,7 @@
+ 	return connectionState != ShuttingDownConnection;
+ }
+ 
+-void MyH323Connection::SetCapabilities(int caps, int dtmf_mode, void *_prefs, int pref_codec)
++void MyH323Connection::SetCapabilities(int caps, int dtmf_mode, void *_prefs, int pref_codec, struct t38_profile *t38profile)
+ {
+ 	PINDEX lastcap = -1; /* last common capability index */
+ 	int alreadysent = 0;
+@@ -1978,6 +2026,9 @@
+ 		}
+ 	}
+ 
++	if (t38profile)
++		lastcap = localCapabilities.SetCapability(0, 0, new AST_T38Capability(t38profile));
++
+ 	cap = new H323_UserInputCapability(H323_UserInputCapability::HookFlashH245);
+ 	if (cap && cap->IsUsable(*this)) {
+ 		lastcap++;
+@@ -2070,6 +2121,22 @@
+ 		controlChannel = NULL;
+ 		return FALSE;
+ 	}
++
++	/* If remote endpoint is Avaya Communication Manager, delay openning H.245 channel
++	   via separate TCP connection for 1 second.
++	   d.kochmashev@gmail.com
++	*/
++	const PStringArray rmtAppInfo = GetRemoteApplication().Tokenise("\t");
++	if (rmtAppInfo[0] == "Avaya Multivantage")
++	{
++		if (h323debug) {
++			H323TransportAddress h245IpAddr(h245Address);
++			cout << "\t-- Avaya Communication Manager detected - " << 
++				"delaying TCP connection to h245Address (" << h245IpAddr << ") for 1 second" << endl;
++		}
++		PThread::Sleep(1000);
++	}
++
+ 	if (!controlChannel->Connect()) {
+ 		PTRACE(1, "H225\tConnect of H245 failed: " << controlChannel->GetErrorText());
+ 		delete controlChannel;
+@@ -2122,7 +2189,345 @@
+ #endif
+ }
+ 
++/* T.38 support */
+ 
++class MyT38Transport : public H323TransportIP
++{
++        PBoolean Connect()
++	{
++	        struct sockaddr_in them;
++		them.sin_family = AF_INET;
++		them.sin_addr.s_addr = remoteAddress;
++		them.sin_port = htons(remotePort);
++		return setup_udptl_connection(m_connection.GetCallReference(), 
++			    	    	      (const char *)m_connection.GetCallToken(),
++			    	              &them) == 0;
++	}
++
++	PBoolean Close()
++	{
++	        /* actual close is done in Asterisk */
++		return TRUE;
++	}
++    
++	PBoolean ReadPDU(PBYTEArray&)
++	{
++		return TRUE;
++	}
++
++	PBoolean ExtractPDU(const PBYTEArray&, PINDEX&)
++	{
++		return TRUE;
++	}
++
++	PBoolean WritePDU(const PBYTEArray&)
++	{
++		return TRUE;
++	}
++
++	PBoolean SetRemoteAddress(const H323TransportAddress& addr)
++	{
++		return addr.GetIpAndPort(remoteAddress, remotePort, "udp");
++	}
++
++	const H323Connection& m_connection;
++
++public:
++	MyT38Transport(const H323Connection& connection) : H323TransportIP(*endPoint, PIPSocket::Address("0.0.0.0"), 0),
++						    	   m_connection(connection)
++	{
++		struct rtp_info info;
++
++		PIPSocket::Address addr;
++		WORD port;
++		m_connection.GetSignallingChannel()->GetRemoteAddress().GetIpAndPort(addr, port);
++	
++		/* Determine the Local (A side) IP Address and port */
++		if(external_udptl_create(m_connection.GetCallReference(),
++		                         (const char *)m_connection.GetCallToken(),
++				         static_cast<in_addr>(addr),
++					 &info) == 0) {
++			localAddress = info.addr;
++			localPort = info.port;
++		}
++	}
++};
++
++struct MyT38Handler : public OpalT38Protocol
++{
++	MyT38Handler(const H323Connection& connection)
++	{
++		transport = new MyT38Transport(connection);
++		autoDeleteTransport = TRUE;
++	}
++};
++
++OpalT38Protocol * MyH323EndPoint::CreateT38ProtocolHandler(const H323Connection & connection) const
++{
++	return new MyT38Handler(connection);
++}
++
++MyT38Channel::MyT38Channel(H323Connection & connection,
++			   const H323Capability & capability,
++			   Directions direction,
++			   unsigned sessionID) : H323_T38Channel(connection,
++						                 capability,
++							         direction,
++							         sessionID,
++								 H323_T38Capability::e_UDP)
++{
++}
++
++PBoolean MyT38Channel::CreateListener()
++{
++	/* Don't create any listener - we don't need them.
++	 * Asterisk channel starts UDPTL listener.
++	 */
++	return TRUE;
++}
++
++H323Channel::Directions MyT38Channel::GetDirection() const
++{
++	/* This way we tell OpenH323 that we need openLogicalChannelAck
++	 * to start the channel
++	 */
++	return IsBidirectional;
++}
++
++void MyT38Channel::Receive() 
++{
++	/* do nothing - Asterisk handles all data */
++}
++
++void MyT38Channel::Transmit()
++{
++	/* do nothing - Asterisk handles all data */
++}
++
++PBoolean MyT38Channel::Start()
++{
++	if (receiver)
++		/* OpenH323 calls Start() for both the receiving and transmitting channel.
++		 * Both are of MyT38Channel type.
++		 * We start as soon as we can transmit data, because this means we know remote media address.
++		 * We do no actions for receiver to not to send AST_T38_NEGOTIATED twice.
++		 */
++		return TRUE;
++
++	const AST_T38Capability *t38Cap = NULL;
++	/* We need to choose whose capabilities to use to generate T.38 profile to send to bridged party.
++	 * 1) When we receive OLC from peer, T.38 profile is copied to local capability when OpenH323 calls OnReceivedPDU()
++	 * for local capability (in CreateLogicalChannel()). 
++	 * 2) When we send OLC, we put T.38 profile from local capability as well.
++	 * Therefore we should use T.38 profile from local capabilities. 
++	 * Note: T.38 profile at this stage possibly would be ignored by bridged party, because
++	 * it could have already applied profile sent by OnRequestModeChange()).
++	 */
++	for (PINDEX i = 0; i < connection.GetLocalCapabilities().GetSize(); i++) {
++		t38Cap = dynamic_cast<AST_T38Capability*>(&connection.GetLocalCapabilities()[i]);
++		if (t38Cap)
++			break;
++	}
++
++	if (!t38Cap) {
++		PTRACE(1, "T38\tNo capability found!");
++		return FALSE;
++	}
++
++	struct t38_profile profile;
++	t38Cap->GetProfile(&profile);
++	profile.ast.request_response = AST_T38_NEGOTIATED;
++
++	if (request_mode_change(connection.GetCallReference(), 
++    	        		(const char *)connection.GetCallToken(),
++				&profile) != 0) {
++		PTRACE(1, "T38\tfailed to ack mode switch!");
++		return FALSE;
++	}
++
++	/* Don't call parent's method - 
++	 * it starts threads which are not needed in this case
++	 */
++	return TRUE;
++}
++
++/* Remote side refused mode change initiated by us */
++void MyH323Connection::OnRefusedModeChange(const H245_RequestModeReject *pdu)
++{
++	if (t38ModeChangeCapabilities.IsEmpty())
++		/* remote side has refused change to audio mode */
++		return H323Connection::OnRefusedModeChange(pdu);
++
++	/* Remote side has refused change to T.38 mode.
++	 * We need to notify Asterisk in this case
++         * to prevent opposite call leg being stuck in T.38 negotiating state 
++         */
++	struct t38_profile profile;
++	profile.ast.request_response = AST_T38_REFUSED;
++	request_mode_change(GetCallReference(), 
++    		            (const char *)GetCallToken(),
++		            &profile);
++
++        return H323Connection::OnRefusedModeChange(pdu);
++}
++
++/* Remote side accepted mode change initiated by us */
++void MyH323Connection::OnAcceptModeChange(const H245_RequestModeAck & pdu)
++{
++	if (!t38ModeChangeCapabilities.IsEmpty())
++		/* remote side has accepted change to T.38 mode,
++		 * AST_T38_NEGOTIATED will be sent when T.38 channel
++		 * will be started
++		 */
++		return H323Connection::OnAcceptModeChange(pdu);
++
++	/* remote side has accepted change to audio mode */
++	struct t38_profile profile;
++	profile.ast.request_response = AST_T38_TERMINATED;
++
++	request_mode_change(GetCallReference(), 
++    	        	    (const char *)GetCallToken(),
++	  		    &profile);
++
++	CloseAllLogicalChannels(FALSE);
++	const H323Capability* capability = GetPreferredAudioCapability();
++	if (capability != NULL && OpenLogicalChannel(*capability,
++                                                     capability->GetDefaultSessionID(),
++                                                     H323Channel::IsTransmitter)) {
++    		PTRACE(1, "H245\tOpened " << *capability << " after audio mode change");
++    	}
++
++	return H323Connection::OnAcceptModeChange(pdu);
++}
++
++void MyH323Connection::OnModeChanged(PBoolean ok)
++{
++	m_modeChangedOk = ok;
++	m_modeChanged.Signal();
++}
++
++/* We accepted mode change request from remote side */
++PBoolean MyH323Connection::OnRequestModeChange(const H245_RequestMode & pdu,
++                                           H245_RequestModeAck & ack,
++                                           H245_RequestModeReject & reject,
++                                           PINDEX & selectedMode)
++{
++	bool genericAudio = false;
++	if (H323Connection::OnRequestModeChange(pdu, ack, reject, selectedMode) == FALSE) {
++		/* Hack to support H.323 stack from Objective Systems (and similar) on remote side.
++		 * OpenH323 was unable to find matching capability(es) on our side (in H323Connection::OnRequestModeChange()),
++		 * because remote side has sent us "generic" audio capability. This usually happens
++		 * on switch back to voice mode from T.38. Check if this is the case.
++		 */
++		for (selectedMode = 0; selectedMode < pdu.m_requestedModes.GetSize(); selectedMode++) {
++			for (PINDEX i = 0; i < pdu.m_requestedModes[selectedMode].GetSize(); i++) {
++				const H245_ModeElementType & modeElement = pdu.m_requestedModes[selectedMode][i].m_type;
++				if (modeElement.GetTag() == H245_ModeElementType::e_audioMode) {
++					const H245_AudioMode &audio = modeElement;
++					if (audio.GetTag() == H245_AudioCapability::e_genericAudioCapability)
++						genericAudio = true;
++				}
++			}
++		}
++
++		/* No matching capability and no generic audio, no luck */
++		if (!genericAudio) 
++			return FALSE;
++
++		const H323Capability* cap = GetPreferredAudioCapability();
++		if (!cap)
++			/* "Generic" capability requested but unable to determine preferred capability */
++			return FALSE;
++
++		H245_ModeDescription description;
++		description.SetSize(1);
++		cap->OnSendingPDU(description[0]);
++		H245_ArrayOf_ModeDescription descriptions;
++		descriptions.SetSize(1);
++		descriptions[0] = description;
++		H245_RequestMode& p = const_cast<H245_RequestMode&>(pdu); /* XXX: we alter what is not supposed to be altered by OpenH323,
++									  * but I don't know any better way
++									  */
++		p.m_requestedModes = descriptions;
++		selectedMode = 0;
++	}
++
++	struct t38_profile profile;
++	H323Capability *localCap = NULL;
++	H245_ModeElement *mode = NULL;
++	const H245_ModeDescription & newMode = pdu.m_requestedModes[selectedMode];
++
++	/* Use first matching capability to understand if this is switch to T.38 fax or voice mode */
++	for (PINDEX i = 0; i < newMode.GetSize(); i++) {
++		mode = &newMode[i];
++		localCap = localCapabilities.FindCapability(*mode);
++		if (localCap)
++		        break;
++	}
++
++	if (!localCap)
++		return FALSE;
++
++	if (AST_T38Capability *t38Cap = dynamic_cast<AST_T38Capability *>(localCap)) {
++		/* inherit T.38 profile from peer's RequestMode message */
++		t38Cap->OnReceivedPDU(mode->m_type);
++		t38Cap->GetProfile(&profile);
++		profile.ast.request_response = AST_T38_REQUEST_NEGOTIATE;
++	} else
++		profile.ast.request_response = AST_T38_REQUEST_TERMINATE;
++
++	/* Check if bridged party supports changing mode
++	 * and reject negotiation with peer if not.
++	 * T.38 profile contains peer's requested mode.
++	 */
++	m_modeChangedOk = FALSE;
++	if (request_mode_change(GetCallReference(), 
++				(const char *)GetCallToken(),
++			        &profile))
++		return FALSE;
++	
++	if (profile.ast.request_response == AST_T38_REQUEST_NEGOTIATE) {
++		/* For switch to T.38 - wait until bridged peer rejects or acks
++		 * mode change, respond to our peer respectively. Otherwise (without wait)
++		 * we'll need to enable T.38 mode and then almost immediately switch back
++		 * to voice mode if peer rejects switch to T.38. The latter should be
++		 * better avoided, because it can happen right in the middle of T.38 OLC negotiations
++		 * and peer's equipment will likely go crazy after this.
++		 * Also when bridged peer acks us, we learn final T.38 capabilities and send them to
++		 * our peer.
++		 */
++		if(!m_modeChangeMutex.Wait(0)) 
++			/* likely locked by CleanUpOnCallEnd() */
++			return FALSE;
++		Unlock(); /* to make FindConnectionWithLock() work ok when disposition is received from bridged peer */
++		m_modeChanged.Wait(3000); /* wait 3 sec for disposition from bridged peer */
++		/* connection couldn't be deleted during wait, because it's protected by m_modeChangeMutex,
++		 * so we can lock it again
++		 */
++		Lock();
++		m_modeChangeMutex.Signal();
++	        return m_modeChangedOk;
++	}
++	
++	/* for switch to audio mode - immediately ack,
++	 * because bridged peer/application might not ack AST_T38_REQUEST_TERMINATE request 
++	 * with AST_T38_TERMINATED (just like app_fax acts)
++	 * XXX: review this part when app_fax is fixed
++	 */
++	return TRUE;
++}
++
++void MyH323Connection::CleanUpOnCallEnd()                                                                                                                                                                                                                                                
++{
++	m_modeChanged.Signal();
++	m_modeChangeMutex.Wait(); 
++	/* if we're here - we're not waiting for mode change */
++	H323Connection::CleanUpOnCallEnd();
++	m_modeChangeMutex.Signal(); 
++}
++
++/* end of T.38 support */
++
+ /* MyH323_ExternalRTPChannel */
+ MyH323_ExternalRTPChannel::MyH323_ExternalRTPChannel(MyH323Connection & connection,
+ 							const H323Capability & capability,
+@@ -2136,7 +2541,11 @@
+ 	info = on_external_rtp_create(connection.GetCallReference(), (const char *)connection.GetCallToken());
+ 	if (!info) {
+ 		cout << "\tERROR: on_external_rtp_create failure" << endl;
+-		return;
++
++		// Throw exception if channel creation failed.
++		// I don't see other way to indicate an error from MyH323_ExternalRTPChannel constructor.
++		// d.kochmashev@gmail.com
++		throw RTPChannelCreationError();
+ 	} else {
+ 		localIpAddr = info->addr;
+ 		localPort = info->port;
+@@ -2160,29 +2569,33 @@
+ 
+ PBoolean MyH323_ExternalRTPChannel::Start(void)
+ {
++	if (isRunning)
++		return false;
++
+ 	/* Call ancestor first */
+-	if (!H323_ExternalRTPChannel::Start()) {
+-		return FALSE;
+-	}
++	if (!H323_ExternalRTPChannel::Start())
++		return false;
+ 
+-	if (h323debug) {
+-		cout << "\t\tExternal RTP Session Starting" << endl;
+-		cout << "\t\tRTP channel id " << sessionID << " parameters:" << endl;
+-	}
++	if (!static_cast<MyH323Connection &>(connection).IsFastStartDisabled()) {
++		if (h323debug) {
++			cout << "\t\tExternal RTP Session Starting" << endl;
++			cout << "\t\tRTP channel id " << sessionID << " parameters:" << endl;
++		}
+ 
+-	/* Collect the remote information */
+-	H323_ExternalRTPChannel::GetRemoteAddress(remoteIpAddr, remotePort);
++		/* Collect the remote information */
++		H323_ExternalRTPChannel::GetRemoteAddress(remoteIpAddr, remotePort);
+ 
+-	if (h323debug) {
+-		cout << "\t\t-- remoteIpAddress: " << remoteIpAddr << endl;
+-		cout << "\t\t-- remotePort: " << remotePort << endl;
+-		cout << "\t\t-- ExternalIpAddress: " << localIpAddr << endl;
+-		cout << "\t\t-- ExternalPort: " << localPort << endl;
++		if (h323debug) {
++			cout << "\t\t-- remoteIpAddress: " << remoteIpAddr << endl;
++			cout << "\t\t-- remotePort: " << remotePort << endl;
++			cout << "\t\t-- ExternalIpAddress: " << localIpAddr << endl;
++			cout << "\t\t-- ExternalPort: " << localPort << endl;
++		}
++		/* Notify Asterisk of remote RTP information */
++		on_start_rtp_channel(connection.GetCallReference(), (const char *)remoteIpAddr.AsString(),
++			remotePort, (const char *)connection.GetCallToken(), (int)payloadCode);
+ 	}
+-	/* Notify Asterisk of remote RTP information */
+-	on_start_rtp_channel(connection.GetCallReference(), (const char *)remoteIpAddr.AsString(), remotePort,
+-		(const char *)connection.GetCallToken(), (int)payloadCode);
+-	return TRUE;
++	return true;
+ }
+ 
+ PBoolean MyH323_ExternalRTPChannel::OnReceivedAckPDU(const H245_H2250LogicalChannelAckParameters & param)
+@@ -2250,6 +2663,9 @@
+ 
+ void h323_end_point_create(void)
+ {
++	// Create MyProcess instance, cause PDECLARE_PROCESS doesn't do this.
++	// d.kochmashev@gmail.com
++	localProcess = new MyProcess();
+ 	channelsOpen = 0;
+ 	logstream = new PAsteriskLog();
+ 	PTrace::SetStream(logstream); 
+@@ -2288,7 +2704,6 @@
+ 							rfc2833_cb				dtmffunc,
+ 							hangup_cb				hangupfunc,
+ 							setcapabilities_cb		capabilityfunc,
+-							setpeercapabilities_cb	peercapabilityfunc,
+ 							onhold_cb				holdfunc)
+ {
+ 	on_incoming_call = ifunc;
+@@ -2304,14 +2719,18 @@
+ 	on_set_rfc2833_payload = dtmffunc;
+ 	on_hangup = hangupfunc;
+ 	on_setcapabilities = capabilityfunc;
+-	on_setpeercapabilities = peercapabilityfunc;
+ 	on_hold = holdfunc;
+ }
+ 
+ /**
+  * Add capability to the capability table of the end point.
+  */
+-int h323_set_capabilities(const char *token, int cap, int dtmf_mode, struct ast_codec_pref *prefs, int pref_codec)
++int h323_set_capabilities(const char *token, 
++			  int cap, 
++			  int dtmf_mode, 
++			  struct ast_codec_pref *prefs, 
++			  int pref_codec,
++			  struct t38_profile *t38profile)
+ {
+ 	MyH323Connection *conn;
+ 
+@@ -2330,12 +2749,115 @@
+ 		cout << " ERROR: [h323_set_capabilities] Unable to find connection " << token << endl;
+ 		return 1;
+ 	}
+-	conn->SetCapabilities((/*conn->bridging ? conn->redir_capabilities :*/ cap), dtmf_mode, prefs, pref_codec);
++	conn->SetCapabilities((/*conn->bridging ? conn->redir_capabilities :*/ cap), dtmf_mode, prefs, pref_codec, t38profile);
+ 	conn->Unlock();
+ 
+ 	return 0;
+ }
+ 
++const H323Capability *MyH323Connection::GetPreferredAudioCapability() const
++{
++	const H323Capabilities& localCaps = GetLocalCapabilities();
++	const H323Capabilities& remoteCaps = GetRemoteCapabilities();
++	const H323Capability *remoteCapability = NULL;
++
++	/* Find first matching audio capability */
++	for (PINDEX i = 0; i < localCaps.GetSize(); i++) {
++		const H323Capability & localCapability = localCaps[i];
++		if(localCapability.GetMainType() != H323Capability::e_Audio)
++			continue;
++		remoteCapability = remoteCaps.FindCapability(localCapability);
++		if (remoteCapability)
++			break;
++	}
++
++	return remoteCapability;
++}
++
++int h323_request_mode_change(const char *token, const struct t38_profile *profile)
++{
++	if (!h323_end_point_exist()) {
++		cout << " ERROR: [h323_change_mode] No Endpoint, this is bad" << endl;
++		return -1;
++	}
++	if (!token || !*token) {
++		cout << " ERROR: [h323_change_mode] Invalid call token specified." << endl;
++		return -1;
++	}
++
++	PString myToken(token);
++	MyH323Connection *conn = (MyH323Connection *)endPoint->FindConnectionWithLock(myToken);
++	if (!conn) {
++		cout << " ERROR: [h323_change_mode_t38] Unable to find connection " << token << endl;
++		return -1;
++	}
++
++	PBoolean res = FALSE;
++	switch (profile->ast.request_response) {
++	case AST_T38_REQUEST_NEGOTIATE:
++	{
++		/* inherit T.38 capabilities */
++		const H323Capabilities& localCaps = conn->GetLocalCapabilities();
++		AST_T38Capability *t38Cap = NULL;
++		for (PINDEX i = 0; i < localCaps.GetSize(); i++) {
++			t38Cap = dynamic_cast<AST_T38Capability*>(&localCaps[i]);
++			if (t38Cap)
++				break;
++		}
++		/* We should definitely have T.38 capability
++		 * in case if Asterisk calls us this way
++		 */
++		t38Cap->SetProfile(profile);
++
++		res = conn->RequestModeChangeT38();
++		break;
++	}
++	case AST_T38_REQUEST_TERMINATE:
++		/* change mode to audio */
++		if (const H323Capability *remoteCapability = conn->GetPreferredAudioCapability()) {
++			if (h323debug)
++	    			cout << "ModeChange: " << remoteCapability->GetFormatName() << endl;
++			res = conn->RequestModeChange(remoteCapability->GetFormatName());
++		}
++		else if (h323debug)
++	    		cout << "ModeChange: no audio capability" << endl;
++		break;
++	case AST_T38_NEGOTIATED:
++	{
++		/* inherit T.38 capabilities */
++		const H323Capabilities& localCaps = conn->GetLocalCapabilities();
++		AST_T38Capability *t38Cap = NULL;
++		for (PINDEX i = 0; i < localCaps.GetSize(); i++) {
++			t38Cap = dynamic_cast<AST_T38Capability*>(&localCaps[i]);
++			if (t38Cap)
++				break;
++		}
++		/* We should definitely have T.38 capability
++		 * in case if Asterisk calls us this way
++		 */
++		t38Cap->SetProfile(profile);
++
++		conn->OnModeChanged(TRUE);
++		res = TRUE;
++		break;
++	}
++	case AST_T38_REFUSED:
++		conn->OnModeChanged(FALSE);
++		res = TRUE;
++		break;
++	case AST_T38_TERMINATED:
++		conn->OnModeChanged(TRUE);
++		res = TRUE;
++		break;
++	default:
++		break;
++	}
++	    
++	conn->Unlock();
++
++	return res == TRUE ? 0 : -1;
++}
++
+ /** Start the H.323 listener */
+ int h323_start_listener(int listenPort, struct sockaddr_in bindaddr)
+ {
+@@ -2364,13 +2886,13 @@
+ /* Addition of functions just to make the channel driver compile with H323Plus */
+ #if VERSION(OPENH323_MAJOR, OPENH323_MINOR, OPENH323_BUILD) > VERSION(1,19,4)
+ /* Alternate RTP port information for Same NAT */
+-BOOL MyH323_ExternalRTPChannel::OnReceivedAltPDU(const H245_ArrayOf_GenericInformation & alternate )
++PBoolean MyH323_ExternalRTPChannel::OnReceivedAltPDU(const H245_ArrayOf_GenericInformation & alternate )
+ {
+ 	return TRUE;
+ }
+ 
+ /* Alternate RTP port information for Same NAT */
+-BOOL MyH323_ExternalRTPChannel::OnSendingAltPDU(H245_ArrayOf_GenericInformation & alternate) const
++PBoolean MyH323_ExternalRTPChannel::OnSendingAltPDU(H245_ArrayOf_GenericInformation & alternate) const
+ {
+ 	return TRUE;
+ }
+@@ -2381,7 +2903,7 @@
+ }
+ 
+ /* Alternate RTP port information for Same NAT */
+-BOOL MyH323_ExternalRTPChannel::OnReceivedAckAltPDU(const H245_ArrayOf_GenericInformation & alternate)
++PBoolean MyH323_ExternalRTPChannel::OnReceivedAckAltPDU(const H245_ArrayOf_GenericInformation & alternate)
+ {
+ 	return TRUE;
+ }
+@@ -2507,7 +3029,6 @@
+   */
+ int h323_make_call(char *dest, call_details_t *cd, call_options_t *call_options)
+ {
+-	int res;
+ 	PString	token;
+ 	PString	host(dest);
+ 
+@@ -2515,9 +3036,7 @@
+ 		return 1;
+ 	}
+ 
+-	res = endPoint->MyMakeCall(host, token, &cd->call_reference, call_options);
+-	memcpy((char *)(cd->call_token), (const unsigned char *)token, token.GetLength());
+-	return res;
++	return endPoint->MyMakeCall(host, cd, call_options);
+ };
+ 
+ int h323_clear_call(const char *call_token, int cause)
+Index: channels/h323/chan_h323.h
+===================================================================
+--- channels/h323/chan_h323.h	(revision 373402)
++++ channels/h323/chan_h323.h	(working copy)
+@@ -31,7 +31,18 @@
+ 
+ #include <arpa/inet.h>
+ #include "asterisk/format.h"
++#ifdef __cplusplus
++extern "C" {
++#endif
++#include <asterisk.h>
++#include <asterisk/frame.h>
++#include <asterisk/udptl.h>
++#include <asterisk/astobj.h>
++#ifdef __cplusplus
++}
++#endif
+ 
++
+ /*
+  * Enable support for sending/reception of tunnelled Q.SIG messages and
+  * some sort of IEs (especially RedirectingNumber) which Cisco CallManager
+@@ -49,6 +60,12 @@
+ 
+ typedef int64_t h323_format;
+ 
++enum h323_udptl_ec_modes {
++    UDPTL_EC_AUTO = 0,
++    UDPTL_EC_FEC,
++    UDPTL_EC_REDUNDANCY
++};
++
+ /** call_option struct holds various bits
+  *         of information for each call */
+ typedef struct call_options {
+@@ -70,6 +87,9 @@
+ 	h323_format     capability;
+ 	int				bridge;
+ 	int				nat;
++	int				t38pt_udptl;
++	enum h323_udptl_ec_modes	t38pt_udptl_ec;
++	unsigned			t38pt_udptl_max_datagram;
+ 	int				tunnelOptions;
+ 	int				holdHandling;
+ 	int				autoframing; /*!< turn on to override local settings with remote framing length */
+@@ -144,6 +164,7 @@
+    the external RTP port from Asterisk. */
+ typedef rtp_info_t *(*on_rtp_cb)(unsigned, const char *);
+ extern on_rtp_cb on_external_rtp_create;
++extern on_rtp_cb on_external_udptl_create;
+ 
+ /* This is a callback prototype function, called to send
+    the remote IP and RTP port from H.323 to Asterisk */
+@@ -218,6 +239,12 @@
+ extern "C" {
+ #endif
+ 
++struct t38_profile {
++	struct ast_control_t38_parameters ast;
++	enum ast_t38_ec_modes error_correction_scheme;
++	int max_datagram;
++};
++
+ 	void h323_gk_urq(void);
+ 	void h323_end_point_create(void);
+ 	void h323_end_process(void);
+@@ -239,9 +266,8 @@
+ 					rfc2833_cb,
+ 					hangup_cb,
+ 					setcapabilities_cb,
+-					setpeercapabilities_cb,
+ 					onhold_cb);
+-	int h323_set_capabilities(const char *, int, int, struct ast_codec_pref *, int);
++	int h323_set_capabilities(const char *, int, int, struct ast_codec_pref *, int, struct t38_profile*);
+ 	int h323_set_alias(struct oh323_alias *);
+ 	int h323_set_gk(int, char *, char *);
+ 	void h323_set_id(char *);
+@@ -268,6 +294,11 @@
+ 	int h323_show_codec(int fd, int argc, char *argv[]);
+ 	int h323_hold_call(const char *token, int);
+ 
++int external_udptl_create(unsigned call_reference, const char * token, struct in_addr them, struct rtp_info *info);
++int setup_udptl_connection(unsigned call_reference, const char *token, const struct sockaddr_in *them);
++int request_mode_change(unsigned call_reference, const char *token, struct t38_profile *profile);
++int h323_request_mode_change(const char *token, const struct t38_profile *profile);
++int set_peer_capabilities(unsigned call_reference, const char *token, int capabilities, struct ast_codec_pref *prefs, const struct t38_profile *profile);
+ #ifdef __cplusplus
+ }
+ #endif
+Index: channels/h323/caps_h323.h
+===================================================================
+--- channels/h323/caps_h323.h	(revision 373402)
++++ channels/h323/caps_h323.h	(working copy)
+@@ -1,6 +1,8 @@
+ #ifndef __AST_H323CAPS_H
+ #define __AST_H323CAPS_H
+ 
++#include <h323t38.h>
++
+ /**This class describes the G.711 codec capability.
+  */
+ class AST_G711Capability : public H323AudioCapability
+@@ -169,4 +171,32 @@
+ 	}
+ };
+ 
++/* T.38 Caps */
++class AST_T38Capability : public H323_T38Capability
++{
++	PCLASSINFO(AST_T38Capability, H323_T38Capability);
++	/* for TerminalCapabilitySet or OpenLogicalChannel PDU */
++	PBoolean OnSendingPDU(H245_DataApplicationCapability & pdu) const;
++	/* for RequestMode PDU */
++	PBoolean OnSendingPDU(H245_DataMode & pdu) const;
++	PBoolean OnReceivedPDU(const H245_DataApplicationCapability & cap);
++
++	H245_T38FaxProfile m_profile;
++	int m_bit_rate;
++
++public:
++	AST_T38Capability(const struct t38_profile*);
++	PObject *Clone() const;
++   
++	/* Create the channel instance, allocating resources as required. */
++	H323Channel *CreateChannel(H323Connection &connection,
++				   H323Channel::Directions, unsigned sessionID,
++				   const H245_H2250LogicalChannelParameters *param) const;
++
++	void SetProfile(const struct t38_profile*);
++	void GetProfile(struct t38_profile*) const;
++	/* received RequestMode from peer, inherit T.38 profile */
++	PBoolean OnReceivedPDU(const H245_DataMode & pdu);
++};
++
+ #endif /* __AST_H323CAPS_H */
+Index: channels/h323/ast_h323.h
+===================================================================
+--- channels/h323/ast_h323.h	(revision 373402)
++++ channels/h323/ast_h323.h	(working copy)
+@@ -30,16 +30,19 @@
+ #define AST_H323_H
+ 
+ #include "ast_ptlib.h"
++#include <t38proto.h>
++#include <h323t38.h>
+ 
+ #define VERSION(a,b,c) ((a)*10000+(b)*100+(c))
+ 
+ class MyH323EndPoint : public H323EndPoint
+ {
+ 	PCLASSINFO(MyH323EndPoint, H323EndPoint);
++	OpalT38Protocol * CreateT38ProtocolHandler(const H323Connection & connection) const;
+ 
+ public:
+ 	MyH323EndPoint();
+-	int MyMakeCall(const PString &, PString &, void *_callReference, void *_opts);
++	int MyMakeCall(const PString &, struct call_details*, struct call_options*);
+ 	PBoolean ClearCall(const PString &, H323Connection::CallEndReason reason);
+ 	PBoolean ClearCall(const PString &);
+ 
+@@ -58,7 +61,19 @@
+ class MyH323Connection : public H323Connection
+ {
+ 	PCLASSINFO(MyH323Connection, H323Connection);
+-
++	void OnRefusedModeChange(const H245_RequestModeReject *pdu);
++	void OnAcceptModeChange(const H245_RequestModeAck & pdu);
++	PBoolean OnRequestModeChange(const H245_RequestMode & pdu,
++                            	 H245_RequestModeAck & ack,
++                            	 H245_RequestModeReject & reject,
++                            	 PINDEX & selectedMode);
++	void OnModeChanged(PBoolean ok);
++	void CleanUpOnCallEnd();
++	
++	PBoolean m_modeChangedOk;
++	PSyncPoint m_modeChanged;
++	PMutex m_modeChangeMutex;
++	
+ public:
+ 	MyH323Connection(MyH323EndPoint &, unsigned, unsigned);
+ 	~MyH323Connection();
+@@ -71,6 +86,7 @@
+ 			const H323SignalPDU &,
+ 			H323SignalPDU &);
+ 	void OnReceivedReleaseComplete(const H323SignalPDU &);
++	PBoolean IsFastStartDisabled() { return fastStartState == FastStartDisabled; }
+ 	PBoolean OnAlerting(const H323SignalPDU &, const PString &);
+ 	PBoolean OnSendReleaseComplete(H323SignalPDU &);
+ 	PBoolean OnReceivedSignalSetup(const H323SignalPDU &);
+@@ -85,7 +101,7 @@
+ 	PBoolean MySendProgress();
+ 	void OnSendCapabilitySet(H245_TerminalCapabilitySet &);
+ 	void OnSetLocalCapabilities();
+-	void SetCapabilities(int, int, void *, int);
++	void SetCapabilities(int, int, void *, int, struct t38_profile*);
+ 	PBoolean OnReceivedCapabilitySet(const H323Capabilities &, const H245_MultiplexCapability *,
+ 			H245_TerminalCapabilitySetReject &);
+ 	void SetCause(int _cause) { cause = _cause; };
+@@ -101,7 +117,8 @@
+ 	virtual void OnReceivedLocalCallHold(int linkedId);
+ 	virtual void OnReceivedLocalCallRetrieve(int linkedId);
+ #endif
+-	void MyHoldCall(BOOL localHold);
++	const H323Capability *GetPreferredAudioCapability() const;
++	void MyHoldCall(PBoolean localHold);
+ 
+ 	PString sourceAliases;
+ 	PString destAliases;
+@@ -134,6 +151,7 @@
+ 	PCLASSINFO(MyH323_ExternalRTPChannel, H323_ExternalRTPChannel);
+ 
+ public:
++	struct RTPChannelCreationError {};	// exception (d.kochmashev@gmail.com)
+ 	MyH323_ExternalRTPChannel(
+ 			MyH323Connection & connection,
+ 			const H323Capability & capability,
+@@ -153,15 +171,30 @@
+ 	PIPSocket::Address remoteIpAddr;
+ 	/* Additional functions in order to have chan_h323 compile with H323Plus */
+ #if VERSION(OPENH323_MAJOR, OPENH323_MINOR, OPENH323_BUILD) > VERSION(1,19,4)
+-	BOOL OnReceivedAltPDU(const H245_ArrayOf_GenericInformation & alternate );
+-	BOOL OnSendingAltPDU(H245_ArrayOf_GenericInformation & alternate) const;
++	PBoolean OnReceivedAltPDU(const H245_ArrayOf_GenericInformation & alternate );
++	PBoolean OnSendingAltPDU(H245_ArrayOf_GenericInformation & alternate) const;
+ 	void OnSendOpenAckAlt(H245_ArrayOf_GenericInformation & alternate) const;
+-	BOOL OnReceivedAckAltPDU(const H245_ArrayOf_GenericInformation & alternate);
++	PBoolean OnReceivedAckAltPDU(const H245_ArrayOf_GenericInformation & alternate);
+ #endif
+ 	WORD localPort;
+ 	WORD remotePort;
+ };
+ 
++struct MyT38Channel : public H323_T38Channel
++{
++	MyT38Channel(H323Connection & connection,        ///< Connection to endpoint for channel
++    		     const H323Capability & capability,  ///< Capability channel is using
++            	     Directions direction,               ///< Direction of channel
++                     unsigned sessionID);                ///< Session ID for channel
++
++private:                
++	PBoolean Start();
++	Directions GetDirection() const;
++	PBoolean CreateListener();
++	void Receive();
++	void Transmit();
++};
++
+ #ifdef H323_H450
+ 
+ #if VERSION(OPENH323_MAJOR, OPENH323_MINOR, OPENH323_BUILD) > VERSION(1,19,4)
+Index: channels/chan_h323.c
+===================================================================
+--- channels/chan_h323.c	(revision 373402)
++++ channels/chan_h323.c	(working copy)
+@@ -29,16 +29,14 @@
+  *
+  * \par See also
+  * \arg Config_h323
+- * OpenH323 http://www.voxgratia.org/
++ * H.323+ http://www.h323plus.org/
+  *
+  * \ingroup channel_drivers
+  */
+ 
+ /*** MODULEINFO
+ 	<depend>openh323</depend>
+-	<defaultenabled>no</defaultenabled>
+-	<support_level>deprecated</support_level>
+-	<replacement>chan_ooh323</replacement>
++	<defaultenabled>yes</defaultenabled>
+  ***/
+ 
+ #ifdef __cplusplus
+@@ -79,6 +77,7 @@
+ #include "asterisk/sched.h"
+ #include "asterisk/io.h"
+ #include "asterisk/rtp_engine.h"
++#include "asterisk/udptl.h"
+ #include "asterisk/acl.h"
+ #include "asterisk/callerid.h"
+ #include "asterisk/cli.h"
+@@ -111,7 +110,6 @@
+ rfc2833_cb on_set_rfc2833_payload;
+ hangup_cb on_hangup;
+ setcapabilities_cb on_setcapabilities;
+-setpeercapabilities_cb on_setpeercapabilities;
+ onhold_cb on_hold;
+ 
+ int h323debug; /*!< global debug flag */
+@@ -129,7 +127,7 @@
+ static struct ast_jb_conf global_jbconf;
+ 
+ /** Variables required by Asterisk */
+-static const char tdesc[] = "The NuFone Network's Open H.323 Channel Driver";
++static const char tdesc[] = "H.323+ channel driver";
+ static const char config[] = "h323.conf";
+ static char default_context[AST_MAX_CONTEXT] = "default";
+ static struct sockaddr_in bindaddr;
+@@ -176,6 +174,7 @@
+ 	char rdnis[80];				/*!< Referring DNIS, if available */
+ 	int amaflags;				/*!< AMA Flags */
+ 	struct ast_rtp_instance *rtp;		/*!< RTP Session */
++	struct ast_udptl *udptl;
+ 	struct ast_dsp *vad;			/*!< Used for in-band DTMF detection */
+ 	int nativeformats;			/*!< Codec formats supported by a channel */
+ 	int needhangup;				/*!< Send hangup when Asterisk is ready */
+@@ -197,6 +196,7 @@
+ 	int noInbandDtmf;			/*!< Inband DTMF processing by DSP isn't available */
+ 	int connection_established;		/*!< Call got CONNECT message */
+ 	int got_progress;			/*!< Call got PROGRESS message, pass inband audio */
++	enum ast_t38_state t38state;
+ 	struct oh323_pvt *next;			/*!< Next channel in list */
+ } *iflist = NULL;
+ 
+@@ -253,6 +253,43 @@
+ static int oh323_indicate(struct ast_channel *c, int condition, const void *data, size_t datalen);
+ static int oh323_fixup(struct ast_channel *oldchan, struct ast_channel *newchan);
+ 
++
++static int oh323_queryoption(struct ast_channel *ast, int option, void *data, int *datalen)
++{
++        struct oh323_pvt *p = (struct oh323_pvt *) ast_channel_tech_pvt(ast);
++	int res = -1;
++
++	if (!p)
++		return -1;
++
++	ast_mutex_lock(&p->lock);
++
++	if (h323debug)
++		ast_verbose("----- oh323_queryoption %d on channel %s\n", option, ast_channel_name(ast));
++
++	switch (option) {
++		case AST_OPTION_T38_STATE:
++			if (*datalen != sizeof(enum ast_t38_state)) {
++				ast_log(LOG_ERROR, "Invalid datalen for AST_OPTION_T38_STATE option."
++					" Expected %d, got %d\n", (int)sizeof(enum ast_t38_state), *datalen);
++				 break;
++			}
++			*((enum ast_t38_state *) data) = p->t38state;
++			res = 0;
++			break;
++
++		default:
++			break;
++	}
++
++	if (h323debug)
++		ast_verbose("+++++ oh323_queryoption %d on channel %s\n", option, ast_channel_name(ast));
++
++	ast_mutex_unlock(&p->lock);
++
++	return res;
++}
++
+ static struct ast_channel_tech oh323_tech = {
+ 	.type = "H323",
+ 	.description = tdesc,
+@@ -268,6 +305,7 @@
+ 	.indicate = oh323_indicate,
+ 	.fixup = oh323_fixup,
+ 	.bridge = ast_rtp_instance_bridge,
++	.queryoption = oh323_queryoption,
+ };
+ 
+ static const char* redirectingreason2str(int redirectingreason)
+@@ -346,8 +384,8 @@
+ 		if (h323debug)
+ 			ast_debug(1, "Preparing %s for new native format\n", ast_channel_name(c));
+ 		ast_format_cap_from_old_bitfield(ast_channel_nativeformats(c), pvt->nativeformats);
+-		ast_set_read_format(c, &c->readformat);
+-		ast_set_write_format(c, &c->writeformat);
++		ast_set_read_format(c, ast_channel_readformat(c));
++		ast_set_write_format(c, ast_channel_writeformat(c));
+ 	}
+ 	if (pvt->needhangup) {
+ 		if (h323debug)
+@@ -590,7 +628,7 @@
+ static int oh323_call(struct ast_channel *c, const char *dest, int timeout)
+ {
+ 	int res = 0;
+-	struct oh323_pvt *pvt = (struct oh323_pvt *)ast_channel_tech_pvt(c);
++	struct oh323_pvt *pvt = (struct oh323_pvt *) ast_channel_tech_pvt(c);
+ 	const char *addr;
+ 	char called_addr[1024];
+ 
+@@ -787,8 +825,8 @@
+ 
+ 				pvt->nativeformats = ast_format_to_old_bitfield(&f->subclass.format);
+ 
+-				ast_set_read_format(pvt->owner, &pvt->owner->readformat);
+-				ast_set_write_format(pvt->owner, &pvt->owner->writeformat);
++				ast_set_read_format(pvt->owner, ast_channel_readformat(pvt->owner));
++				ast_set_write_format(pvt->owner, ast_channel_writeformat(pvt->owner));
+ 				ast_channel_unlock(pvt->owner);
+ 			}
+ 			/* Do in-band DTMF detection */
+@@ -817,7 +855,7 @@
+ static struct ast_frame *oh323_read(struct ast_channel *c)
+ {
+ 	struct ast_frame *fr;
+-	struct oh323_pvt *pvt = (struct oh323_pvt *)ast_channel_tech_pvt(c);
++	struct oh323_pvt *pvt = (struct oh323_pvt *) ast_channel_tech_pvt(c);
+ 	ast_mutex_lock(&pvt->lock);
+ 	__oh323_update_info(c, pvt);
+ 	switch(ast_channel_fdno(c)) {
+@@ -830,6 +868,12 @@
+ 		else
+ 			fr = &ast_null_frame;
+ 		break;
++        case 4:
++		if (pvt->udptl)
++			fr = ast_udptl_read(pvt->udptl);   /* UDPTL for T.38 */
++		else
++			fr = &ast_null_frame;
++		break;
+ 	default:
+ 		ast_log(LOG_ERROR, "Unable to handle fd %d on channel %s\n", ast_channel_fdno(c), ast_channel_name(c));
+ 		fr = &ast_null_frame;
+@@ -846,6 +890,15 @@
+ 	if (frame->frametype != AST_FRAME_VOICE) {
+ 		if (frame->frametype == AST_FRAME_IMAGE) {
+ 			return 0;
++		} else if (frame->frametype == AST_FRAME_MODEM) {
++            		if (pvt) {
++                    		ast_mutex_lock(&pvt->lock);
++                    		if (pvt->udptl &&
++                        	    (pvt->t38state == T38_STATE_NEGOTIATED))
++                            		res = ast_udptl_write(pvt->udptl, frame);
++                    		ast_mutex_unlock(&pvt->lock);
++				return res;
++			}
+ 		} else {
+ 			ast_log(LOG_WARNING, "Can't send %d type frames with H323 write\n", frame->frametype);
+ 			return 0;
+@@ -854,7 +907,7 @@
+ 		if (!(ast_format_cap_iscompatible(ast_channel_nativeformats(c), &frame->subclass.format))) {
+ 			char tmp[256];
+ 			ast_log(LOG_WARNING, "Asked to transmit frame type '%s', while native formats is '%s' (read/write = %s/%s)\n",
+-				ast_getformatname(&frame->subclass.format), ast_getformatname_multiple(tmp, sizeof(tmp), ast_channel_nativeformats(c)), ast_getformatname(&c->readformat), ast_getformatname(&c->writeformat));
++				ast_getformatname(&frame->subclass.format), ast_getformatname_multiple(tmp, sizeof(tmp), ast_channel_nativeformats(c)), ast_getformatname(ast_channel_readformat(c)), ast_getformatname(ast_channel_writeformat(c)));
+ 			return 0;
+ 		}
+ 	}
+@@ -868,6 +921,120 @@
+ 	return res;
+ }
+ 
++static int handle_t38_control(struct oh323_pvt *pvt, const struct ast_control_t38_parameters *parameters, const char *token)
++{
++	int res = -1;
++	ast_mutex_lock(&pvt->lock);
++
++	switch (parameters->request_response) {
++	case AST_T38_REQUEST_NEGOTIATE:
++		if (pvt->t38state == T38_STATE_UNKNOWN) {
++			enum ast_t38_state old_state = pvt->t38state;
++			struct t38_profile profile;
++
++			ast_udptl_set_local_max_ifp(pvt->udptl, parameters->max_ifp);
++			profile.ast = *parameters;
++			profile.max_datagram = ast_udptl_get_local_max_datagram(pvt->udptl);
++			profile.error_correction_scheme = ast_udptl_get_error_correction_scheme(pvt->udptl);
++
++			pvt->t38state = T38_STATE_NEGOTIATING; /* callback can happen very quickly, therefore switch 
++								* to negotiating state right now, while pvt is under lock
++								*/
++			ast_mutex_unlock(&pvt->lock);
++			res = h323_request_mode_change(token, &profile);
++			ast_mutex_lock(&pvt->lock);
++
++			if (res != 0)
++				pvt->t38state = old_state;
++		} else if (pvt->t38state == T38_STATE_NEGOTIATED) {
++			/* already negotiated, send confirmation to bridged peer immediately */
++			struct ast_control_t38_parameters parameters = { .request_response = AST_T38_NEGOTIATED };
++			res = ast_queue_control_data(pvt->owner, AST_CONTROL_T38_PARAMETERS, &parameters, sizeof(parameters));
++		} else if (pvt->t38state == T38_STATE_UNAVAILABLE) {
++			struct ast_control_t38_parameters parameters = { .request_response = AST_T38_REFUSED };
++			res = ast_queue_control_data(pvt->owner, AST_CONTROL_T38_PARAMETERS, &parameters, sizeof(parameters));
++		}
++		break;
++	case AST_T38_REQUEST_TERMINATE:
++		/* bridged peer requests to terminate T38 session */
++		if (pvt->t38state == T38_STATE_NEGOTIATED || pvt->t38state == T38_STATE_NEGOTIATING) {
++			struct t38_profile profile;
++			profile.ast = *parameters;
++
++			pvt->t38state = T38_STATE_NEGOTIATING; /* callback can happen very quickly, therefore switch 
++								* to negotiating state right now, while pvt is under lock
++								*/
++			ast_mutex_unlock(&pvt->lock);
++			res = h323_request_mode_change(token, &profile);
++			ast_mutex_lock(&pvt->lock);
++
++			if (res != 0)
++				/* failed to request change to audio mode */
++				pvt->t38state = pvt->t38state;
++		} else  {
++			/* already not active, send confirmation to bridged peer immediately */
++			struct ast_control_t38_parameters parameters = { .request_response = AST_T38_TERMINATED };
++			res = ast_queue_control_data(pvt->owner, AST_CONTROL_T38_PARAMETERS, &parameters, sizeof(parameters));
++		}
++		break;
++	case AST_T38_REFUSED:
++		/* bridged peer indicates that he has refused to start T38 session */
++		if (pvt->t38state == T38_STATE_NEGOTIATING) {
++			struct t38_profile profile;
++			profile.ast = *parameters;
++			pvt->t38state = T38_STATE_UNKNOWN;
++
++			ast_mutex_unlock(&pvt->lock);
++			res = h323_request_mode_change(token, &profile);
++			ast_mutex_lock(&pvt->lock);
++		}
++		break;
++	case AST_T38_TERMINATED:
++		/* bridged peer indicates that he has terminated T38 session */
++		if (pvt->t38state == T38_STATE_NEGOTIATED || pvt->t38state == T38_STATE_NEGOTIATING) {
++			struct t38_profile profile;
++			profile.ast = *parameters;
++			if (pvt->t38state == T38_STATE_NEGOTIATED)
++				/* AST_T38_TERMINATED sent to us without request from our side.
++				 * This is a bug in bridged channel, but we will handle this anyway
++				 * by re-defining request.
++				 */
++				profile.ast.request_response = AST_T38_REQUEST_TERMINATE;
++			else
++				/* we got ack for our AST_T38_REQUEST_TERMINATE */
++				pvt->t38state = T38_STATE_UNKNOWN;
++
++			ast_mutex_unlock(&pvt->lock);
++			res = h323_request_mode_change(token, &profile);
++			ast_mutex_lock(&pvt->lock);
++		}
++		break;
++	case AST_T38_NEGOTIATED:
++		if (pvt->t38state == T38_STATE_NEGOTIATING) {
++			struct t38_profile profile;
++
++			ast_udptl_set_local_max_ifp(pvt->udptl, parameters->max_ifp);
++			profile.ast = *parameters;
++			profile.max_datagram = ast_udptl_get_local_max_datagram(pvt->udptl);
++			profile.error_correction_scheme = ast_udptl_get_error_correction_scheme(pvt->udptl);
++
++			ast_mutex_unlock(&pvt->lock);
++			res = h323_request_mode_change(token, &profile);
++			ast_mutex_lock(&pvt->lock);
++
++			/* state will be changed when T.38 channel will
++			 * be started in openh323
++			 */
++		}
++		break;
++	default:
++    		break;
++	}
++	
++	ast_mutex_unlock(&pvt->lock);
++	return res;
++}
++
+ static int oh323_indicate(struct ast_channel *c, int condition, const void *data, size_t datalen)
+ {
+ 
+@@ -876,6 +1043,9 @@
+ 	int res = -1;
+ 	int got_progress;
+ 
++	if (!pvt)
++		return -1;
++	
+ 	ast_mutex_lock(&pvt->lock);
+ 	token = (pvt->cd.call_token ? ast_strdup(pvt->cd.call_token) : NULL);
+ 	got_progress = pvt->got_progress;
+@@ -944,6 +1114,14 @@
+ 	case AST_CONTROL_PVT_CAUSE_CODE:
+ 	case -1:
+ 		break;
++	case AST_CONTROL_T38_PARAMETERS:
++		if (datalen != sizeof(struct ast_control_t38_parameters))
++			ast_log(LOG_ERROR, "Invalid datalen for AST_CONTROL_T38. "
++                                           "Expected %d, got %d\n",
++                            		   (int)sizeof(enum ast_control_t38), (int)datalen);
++		else
++			res = handle_t38_control(pvt, data, token);
++            	break;
+ 	default:
+ 		ast_log(LOG_WARNING, "OH323: Don't know how to indicate condition %d on %s\n", condition, token);
+ 		break;
+@@ -981,8 +1159,8 @@
+ 
+ 	{
+ 		struct ast_sockaddr tmp;
+-
+ 		ast_sockaddr_from_sin(&tmp, &bindaddr);
++		tmp.ss.ss_family = AF_INET;
+ 		if (ast_find_ourip(&our_addr, &tmp, AF_INET)) {
+ 			ast_mutex_unlock(&pvt->lock);
+ 			ast_log(LOG_ERROR, "Unable to locate local IP address for RTP stream\n");
+@@ -1025,6 +1203,42 @@
+ 	return 0;
+ }
+ 
++static int __oh323_udptl_create(struct oh323_pvt *pvt)
++{
++	struct ast_sockaddr tmp;
++
++	if (pvt->udptl)
++		return 0;
++
++	ast_sockaddr_from_sin(&tmp, &bindaddr);
++	pvt->udptl = ast_udptl_new_with_bindaddr(sched, io, 0, &tmp);
++	if (!pvt->udptl) {
++		/* t38pt_udptl is configured, but we failed to create UDPTL session,
++		 * this is error
++		 */
++		ast_log(LOG_WARNING, "Unable to create UDPTL session: %s\n", strerror(errno));
++		return -1;
++	}
++	pvt->t38state = T38_STATE_UNKNOWN; /* t38pt_udptl is enabled, but no fax negotiations have been done yet */
++
++	switch (pvt->options.t38pt_udptl_ec) {
++	case UDPTL_EC_FEC:
++		ast_udptl_set_error_correction_scheme(pvt->udptl, UDPTL_ERROR_CORRECTION_FEC);
++		break;
++	case UDPTL_EC_REDUNDANCY:
++		ast_udptl_set_error_correction_scheme(pvt->udptl, UDPTL_ERROR_CORRECTION_REDUNDANCY);
++		break;
++	default:
++		break;
++	}
++
++	ast_udptl_setnat(pvt->udptl, pvt->options.nat);
++
++	ast_udptl_setqos(pvt->udptl, tos, cos);
++	
++	return 0;
++}
++
+ /*! \brief Private structure should be locked on a call */
+ static struct ast_channel *__oh323_new(struct oh323_pvt *pvt, int state, const char *host, const char *linkedid)
+ {
+@@ -1061,10 +1275,10 @@
+ 
+ 		pvt->nativeformats = ast_format_cap_to_old_bitfield(ast_channel_nativeformats(ch));
+ 		ast_best_codec(ast_channel_nativeformats(ch), &tmpfmt);
+-		ast_format_copy(&ch->writeformat, &tmpfmt);
+-		ast_format_copy(&ch->rawwriteformat, &tmpfmt);
+-		ast_format_copy(&ch->readformat, &tmpfmt);
+-		ast_format_copy(&ch->rawreadformat, &tmpfmt);
++		ast_format_copy(ast_channel_writeformat(ch), &tmpfmt);
++		ast_format_copy(ast_channel_rawwriteformat(ch), &tmpfmt);
++		ast_format_copy(ast_channel_readformat(ch), &tmpfmt);
++		ast_format_copy(ast_channel_rawreadformat(ch), &tmpfmt);
+ 		if (!pvt->rtp)
+ 			__oh323_rtp_create(pvt);
+ #if 0
+@@ -1077,11 +1291,15 @@
+ 			ast_channel_set_fd(ch, 3, ast_rtp_instance_fd(pvt->vrtp, 1));
+ 		}
+ #endif
+-#ifdef T38_SUPPORT
++		if (pvt->options.t38pt_udptl && __oh323_udptl_create(pvt)) {
++			ast_hangup(ch);
++			return NULL;
++		}
++
+ 		if (pvt->udptl) {
+ 			ast_channel_set_fd(ch, 4, ast_udptl_fd(pvt->udptl));
+ 		}
+-#endif
++
+ 		if (state == AST_STATE_RING) {
+ 			ast_channel_rings_set(ch, 1);
+ 		}
+@@ -1173,6 +1391,7 @@
+ 	}
+ 	ast_copy_string(pvt->context, default_context, sizeof(pvt->context));
+ 	pvt->newstate = pvt->newcontrol = pvt->newdigit = pvt->update_rtp_info = pvt->DTMFsched = -1;
++	pvt->t38state = T38_STATE_UNAVAILABLE; /* we don't know if t38pt_udptl is enabled in peer/user */
+ 	ast_mutex_init(&pvt->lock);
+ 	/* Add to interface list */
+ 	ast_mutex_lock(&iflock);
+@@ -1208,6 +1427,47 @@
+ 	return NULL;
+ }
+ 
++int external_udptl_create(unsigned call_reference, const char * token, struct in_addr them, struct rtp_info *info)
++{
++	struct oh323_pvt *pvt;
++	struct sockaddr_in us;
++	struct ast_sockaddr tmp;
++
++	pvt = find_call_locked(call_reference, token);
++	if (!pvt) {
++		ast_log(LOG_ERROR, "Unable to find call %s(%d)\n", token, call_reference);
++		return -1;
++	}
++	if (!pvt->udptl) {
++		/* Strange, if this function if invoked, UDPTL should - it means we have provided T.38 capability
++		 * and UDPTL should be created
++		 */
++		ast_log(LOG_ERROR, "No UDPTL for call %s(%d)\n", token, call_reference);
++		ast_mutex_unlock(&pvt->lock);
++		return -1;
++	}
++
++	/* figure out our local RTP port and tell the H.323 stack about it */
++	ast_udptl_get_us(pvt->udptl, &tmp);
++	ast_sockaddr_to_sin(&tmp, &us);
++	ast_mutex_unlock(&pvt->lock);
++
++	if (!us.sin_addr.s_addr) { // 0.0.0.0
++		struct ast_sockaddr t;
++		struct sockaddr_in them_s;
++		them_s.sin_addr = them;
++		ast_sockaddr_from_sin(&t, &them_s);
++		ast_ouraddrfor(&t, &tmp);
++		ast_sockaddr_to_sin(&tmp, &us);
++	}
++
++	ast_copy_string(info->addr, ast_inet_ntoa(us.sin_addr), sizeof(info->addr));
++	info->port = ntohs(us.sin_port);
++	if (h323debug)
++		ast_debug(1, "Sending UDPTL 'US' %s:%d\n", info->addr, info->port);
++	return 0;
++}
++
+ static int update_state(struct oh323_pvt *pvt, int state, int signal)
+ {
+ 	if (!pvt)
+@@ -1368,14 +1628,26 @@
+ 		options->silenceSuppression = ast_true(v->value);
+ 	} else if (!strcasecmp(v->name, "progress_setup")) {
+ 		tmp = atoi(v->value);
+-		if ((tmp != 0) && (tmp != 1) && (tmp != 3) && (tmp != 8)) {
++
++		// Allowed values of Progress Description are:
++		// 0 - don't set Progress Description
++		// 1-5,8 - set Progress Description to this value
++		// d.kochmashev@gmail.com
++
++		if (tmp < 0 || tmp == 6 || tmp == 7 || tmp > 8) {
+ 			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d, assuming 0\n", v->value, v->name, v->lineno);
+ 			tmp = 0;
+ 		}
+ 		options->progress_setup = tmp;
+ 	} else if (!strcasecmp(v->name, "progress_alert")) {
+ 		tmp = atoi(v->value);
+-		if ((tmp != 0) && (tmp != 1) && (tmp != 8)) {
++
++		// Allowed values of Progress Description are:
++		// 0 - don't set Progress Description
++		// 1-5,8 - set Progress Description to this value
++		// d.kochmashev@gmail.com
++
++		if (tmp < 0 || tmp == 6 || tmp == 7 || tmp > 8) {
+ 			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d, assuming 0\n", v->value, v->name, v->lineno);
+ 			tmp = 0;
+ 		}
+@@ -1397,6 +1669,19 @@
+ 			options->tunnelOptions |= H323_TUNNEL_QSIG;
+ 		else
+ 			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d\n", v->value, v->name, v->lineno);
++	} else if (!strcasecmp(v->name, "t38pt_udptl")) {
++		options->t38pt_udptl = ast_true(v->value);
++	} else if (!strcasecmp(v->name, "t38pt_udptl_ec")) {
++		if (!strcasecmp(v->value, "auto"))
++		    options->t38pt_udptl_ec = UDPTL_EC_AUTO;
++		else if (!strcasecmp(v->value, "fec"))
++		    options->t38pt_udptl_ec = UDPTL_EC_FEC;
++		else if (!strcasecmp(v->value, "redundancy"))
++		    options->t38pt_udptl_ec = UDPTL_EC_REDUNDANCY;
++		else
++		    ast_log(LOG_WARNING, "Invalid value %s for %s at line %d\n", v->value, v->name, v->lineno);
++	} else if (!strcasecmp(v->name, "t38pt_udptl_max_datagram")) {
++		options->t38pt_udptl_max_datagram = atoi(v->value);
+ 	} else if (!strcasecmp(v->name, "hold")) {
+ 		if (!strcasecmp(v->value, "none"))
+ 			options->holdHandling = ~0;
+@@ -1465,7 +1750,6 @@
+ 			} else {
+ 				struct ast_sockaddr tmp;
+ 
+-				tmp.ss.ss_family = AF_INET;
+ 				if (ast_get_ip(&tmp, v->value)) {
+ 					ASTOBJ_UNREF(user, oh323_destroy_user);
+ 					return NULL;
+@@ -1585,12 +1869,12 @@
+ 			{
+ 				struct ast_sockaddr tmp;
+ 
+-				tmp.ss.ss_family = AF_INET;
+ 				if (ast_get_ip(&tmp, v->value)) {
+ 					ast_log(LOG_ERROR, "Could not determine IP for %s\n", v->value);
+ 					ASTOBJ_UNREF(peer, oh323_destroy_peer);
+ 					return NULL;
+ 				}
++				tmp.ss.ss_family = AF_INET;
+ 				ast_sockaddr_to_sin(&tmp, &peer->addr);
+ 			}
+ 		} else if (!strcasecmp(v->name, "port")) {
+@@ -2079,11 +2363,11 @@
+ 			if (!(ast_format_cap_identical(ast_channel_nativeformats(pvt->owner), pvt_native))) {
+ 				if (h323debug) {
+ 					char tmp[256], tmp2[256];
+-					ast_debug(1, "Native format changed to '%s' from '%s', read format is %s, write format is %s\n", ast_getformatname_multiple(tmp, sizeof(tmp), pvt_native), ast_getformatname_multiple(tmp2, sizeof(tmp2), ast_channel_nativeformats(pvt->owner)), ast_getformatname(&pvt->owner->readformat), ast_getformatname(&pvt->owner->writeformat));
++					ast_debug(1, "Native format changed to '%s' from '%s', read format is %s, write format is %s\n", ast_getformatname_multiple(tmp, sizeof(tmp), pvt_native), ast_getformatname_multiple(tmp2, sizeof(tmp2), ast_channel_nativeformats(pvt->owner)), ast_getformatname(ast_channel_readformat(pvt->owner)), ast_getformatname(ast_channel_writeformat(pvt->owner)));
+ 				}
+ 				ast_format_cap_copy(ast_channel_nativeformats(pvt->owner), pvt_native);
+-				ast_set_read_format(pvt->owner, &pvt->owner->readformat);
+-				ast_set_write_format(pvt->owner, &pvt->owner->writeformat);
++				ast_set_read_format(pvt->owner, ast_channel_readformat(pvt->owner));
++				ast_set_write_format(pvt->owner, ast_channel_writeformat(pvt->owner));
+ 			}
+ 			if (pvt->options.progress_audio)
+ 				ast_queue_control(pvt->owner, AST_CONTROL_PROGRESS);
+@@ -2119,6 +2403,129 @@
+ 	return;
+ }
+ 
++int setup_udptl_connection(unsigned call_reference, const char *token, const struct sockaddr_in *them)
++{
++	struct oh323_pvt *p;
++	struct ast_sockaddr tmp;
++
++	if (h323debug)
++		ast_debug(1, "Setting up UDPTL connection for %s\n", token);
++
++	/* Find the call or allocate a private structure if call not found */
++	p = find_call_locked(call_reference, token);
++	if (!p) {
++		ast_log(LOG_ERROR, "Something is wrong: udptl\n");
++		return -1;
++	}
++	if (!p->udptl) {
++		ast_log(LOG_ERROR, "No UDPTL for call %s(%d)\n", token, call_reference);
++		ast_mutex_unlock(&p->lock);
++		return -1;
++	}
++
++	ast_sockaddr_from_sin(&tmp, them);
++	ast_udptl_set_peer(p->udptl, &tmp);
++
++	ast_mutex_unlock(&p->lock);
++
++	if (h323debug)
++		ast_debug(1, "UDPTL connection prepared for %s\n", token);
++
++	return 0;
++}
++
++int request_mode_change(unsigned call_reference, 
++			const char *token, 
++			struct t38_profile *profile)
++{
++	struct oh323_pvt *p = NULL;
++	int res = -1;
++
++	if(h323debug)
++		ast_debug(1, "Requesting mode change (%d) for %s\n", profile->ast.request_response, token);
++        
++	p = find_call_locked(call_reference, token);
++	if (!p) {
++		ast_log(LOG_ERROR, "Unable to find call %s(%d)\n", token, call_reference);
++		return -1;
++	}
++
++	if ((profile->ast.request_response == AST_T38_REQUEST_NEGOTIATE && p->t38state != T38_STATE_UNKNOWN) ||
++	    (profile->ast.request_response == AST_T38_REQUEST_TERMINATE && p->t38state != T38_STATE_NEGOTIATED && p->t38state != T38_STATE_NEGOTIATING) ||
++	    (profile->ast.request_response == AST_T38_NEGOTIATED && p->t38state != T38_STATE_NEGOTIATING) || 
++	    (profile->ast.request_response == AST_T38_TERMINATED && p->t38state != T38_STATE_NEGOTIATING) ||
++	    (profile->ast.request_response == AST_T38_REFUSED && p->t38state != T38_STATE_NEGOTIATING)) {
++		/* no need to pass this to bridged peer */
++		ast_log(LOG_ERROR, "Wrong request/response %d received in state %d for call %s(%d)\n", profile->ast.request_response, p->t38state, token, call_reference);
++		ast_mutex_unlock(&p->lock);
++		return -1;
++	}
++	    
++	if (profile->ast.request_response == AST_T38_REQUEST_NEGOTIATE || 
++	    profile->ast.request_response == AST_T38_NEGOTIATED) {
++		unsigned max_datagram = profile->max_datagram;
++		if (max_datagram < p->options.t38pt_udptl_max_datagram)
++			max_datagram = p->options.t38pt_udptl_max_datagram;
++
++		if (!p->udptl) {
++			/* Strange, if we accept T.38 mode change - it means we have provided T.38 capability
++			 * and UDPTL should be created
++			 */ 
++			ast_log(LOG_ERROR, "No UDPTL for call %s(%d)\n", token, call_reference);
++    			ast_mutex_unlock(&p->lock);
++			return -1;
++		}
++
++		ast_udptl_set_far_max_datagram(p->udptl, max_datagram);
++		ast_udptl_set_error_correction_scheme(p->udptl, profile->error_correction_scheme);
++		profile->ast.max_ifp = ast_udptl_get_far_max_ifp(p->udptl);
++        }
++
++        if (p->owner) {
++                while (p->owner && ast_channel_trylock(p->owner)) {
++                        ast_debug(1,"Failed to grab lock, trying again\n");
++                        DEADLOCK_AVOIDANCE(&p->lock);
++                }
++                if (!p->owner) {
++			ast_log(LOG_ERROR, "No owner for call %s(%d)\n", token, call_reference);
++    			ast_mutex_unlock(&p->lock);
++			return -1;
++		}
++        } else {
++		ast_log(LOG_ERROR, "No owner for call %s(%d)\n", token, call_reference);
++		ast_mutex_unlock(&p->lock);
++		return -1;
++	}
++
++	res = ast_queue_control_data(p->owner, AST_CONTROL_T38_PARAMETERS, &profile->ast, sizeof(profile->ast));
++	if (res == 0) {
++		switch (profile->ast.request_response) {
++		case AST_T38_REQUEST_NEGOTIATE:
++		case AST_T38_REQUEST_TERMINATE:
++			p->t38state = T38_STATE_NEGOTIATING;
++			break;
++		case AST_T38_TERMINATED:
++		case AST_T38_REFUSED:
++			p->t38state = T38_STATE_UNKNOWN;
++			break;
++		case AST_T38_NEGOTIATED:
++			/* T.38 channel has been started in openh323 */
++			p->t38state = T38_STATE_NEGOTIATED;
++			break;
++		default:
++			break;
++		}
++	}
++
++	ast_channel_unlock(p->owner);
++	ast_mutex_unlock(&p->lock);
++
++	if(h323debug)
++		ast_debug(1, "Request mode change %s for %s\n", res ? "failed" : "done", token);
++
++	return res;
++}
++
+ /*! \brief
+   *	Call-back function to signal asterisk that the channel has been answered
+   * Returns nothing
+@@ -2516,16 +2923,17 @@
+ 		ast_debug(1, "DTMF payload on %s set to %d\n", token, payload);
+ }
+ 
+-static void set_peer_capabilities(unsigned call_reference, const char *token, int capabilities, struct ast_codec_pref *prefs)
++int set_peer_capabilities(unsigned call_reference, const char *token, int capabilities, struct ast_codec_pref *prefs, const struct t38_profile *t38profile)
+ {
+ 	struct oh323_pvt *pvt;
+-
++	int res = -1;
++	
+ 	if (h323debug)
+ 		ast_debug(1, "Got remote capabilities from connection %s\n", token);
+ 
+ 	pvt = find_call_locked(call_reference, token);
+ 	if (!pvt)
+-		return;
++		return -1;
+ 	pvt->peercapability = capabilities;
+ 	pvt->jointcapability = pvt->options.capability & capabilities;
+ 	if (prefs) {
+@@ -2548,7 +2956,32 @@
+ 			}
+ 		}
+ 	}
++
++	/* UDPTL can be not created yet (when servicing incoming call) */
++	if (pvt->options.t38pt_udptl && __oh323_udptl_create(pvt)) {
++		ast_log(LOG_ERROR, "Unable to create UDPTL for call %s(%d)\n", token, call_reference);
++		goto ERROR;
++	}
++
++	if (t38profile && pvt->udptl) {
++		unsigned max_datagram = t38profile->max_datagram;
++		if (max_datagram < pvt->options.t38pt_udptl_max_datagram)
++			max_datagram = pvt->options.t38pt_udptl_max_datagram;
++
++		if (pvt->options.t38pt_udptl_ec == UDPTL_EC_AUTO)
++			/* Use peer's options. We support all EC schemes, so in "auto" mode we take
++		         * what peer suggests us. Then we have more chances that he won't reject
++		         * RequestMode message from us when/if we will trigger T.38 mode switch.
++		         */
++			ast_udptl_set_error_correction_scheme(pvt->udptl, t38profile->error_correction_scheme);
++		ast_udptl_set_far_max_datagram(pvt->udptl, max_datagram);
++	}
++
++	res = 0;
++ERROR:
+ 	ast_mutex_unlock(&pvt->lock);
++
++	return res;
+ }
+ 
+ static void set_local_capabilities(unsigned call_reference, const char *token)
+@@ -2556,19 +2989,39 @@
+ 	struct oh323_pvt *pvt;
+ 	int capability, dtmfmode, pref_codec;
+ 	struct ast_codec_pref prefs;
++	struct t38_profile t38profile;
++	int t38 = 0;
+ 
+ 	if (h323debug)
+ 		ast_debug(1, "Setting capabilities for connection %s\n", token);
+ 
+ 	pvt = find_call_locked(call_reference, token);
+-	if (!pvt)
++	if (!pvt) {
++		ast_log(LOG_ERROR, "Unable to find call %s(%d)\n", token, call_reference);
+ 		return;
++	}
+ 	capability = (pvt->jointcapability) ? pvt->jointcapability : pvt->options.capability;
+ 	dtmfmode = pvt->options.dtmfmode;
+ 	prefs = pvt->options.prefs;
+ 	pref_codec = pvt->pref_codec;
++
++	/* UDPTL can be not created yet (when servicing incoming call) */
++	if (pvt->options.t38pt_udptl && __oh323_udptl_create(pvt)) {
++		ast_log(LOG_ERROR, "Unable to create UDPTL for call %s(%d)\n", token, call_reference);
++		ast_mutex_unlock(&pvt->lock);
++		return;
++	}
++	if (pvt->udptl) {
++		/* indicate that we support T.38 */
++		memset(&t38profile, 0, sizeof(t38profile));
++		t38profile.ast.rate = AST_T38_RATE_14400;
++		t38profile.ast.rate_management = AST_T38_RATE_MANAGEMENT_LOCAL_TCF;
++		t38profile.error_correction_scheme = ast_udptl_get_error_correction_scheme(pvt->udptl);
++		t38 = 1;
++	}
++
+ 	ast_mutex_unlock(&pvt->lock);
+-	h323_set_capabilities(token, capability, dtmfmode, &prefs, pref_codec);
++	h323_set_capabilities(token, capability, dtmfmode, &prefs, pref_codec, t38 ? &t38profile : NULL);
+ 
+ 	if (h323debug) {
+ 		int i;
+@@ -3033,6 +3486,7 @@
+ 				ast_log(LOG_WARNING, "Invalid address: %s\n", v->value);
+ 			} else {
+ 				memcpy(&bindaddr.sin_addr, hp->h_addr, sizeof(bindaddr.sin_addr));
++				bindaddr.sin_family = AF_INET;
+ 			}
+ 		} else if (!strcasecmp(v->name, "tos")) {	/* Needs to be removed in next release */
+ 			ast_log(LOG_WARNING, "The \"tos\" setting is deprecated in this version of Asterisk. Please change to \"tos_audio\".\n");
+@@ -3220,7 +3674,7 @@
+ 	struct oh323_pvt *pvt;
+ 	enum ast_rtp_glue_result res = AST_RTP_GLUE_RESULT_LOCAL;
+ 
+-	if (!(pvt = (struct oh323_pvt *)ast_channel_tech_pvt(chan)))
++	if (!(pvt = (struct oh323_pvt *) ast_channel_tech_pvt(chan)))
+ 		return AST_RTP_GLUE_RESULT_FORBID;
+ 
+ 	ast_mutex_lock(&pvt->lock);
+@@ -3307,6 +3761,22 @@
+ 	.update_peer = oh323_set_rtp_peer,
+ };
+ 
++static struct ast_udptl *oh323_get_udptl_peer(struct ast_channel *chan)
++{
++	struct oh323_pvt *p;
++
++	p = ast_channel_tech_pvt(chan);
++	if (!p)
++		return NULL;
++	
++	return p->udptl;
++}
++
++static struct ast_udptl_protocol oh323_udptl = {
++	.type = "H323",
++	.get_udptl_info = oh323_get_udptl_peer,
++};
++
+ static enum ast_module_load_result load_module(void)
+ {
+ 	int res;
+@@ -3366,6 +3836,8 @@
+ 
+ 		ast_rtp_glue_register(&oh323_rtp_glue);
+ 
++		ast_udptl_proto_register(&oh323_udptl);
++
+ 		/* Register our callback functions */
+ 		h323_callback_register(setup_incoming_call,
+ 						setup_outgoing_call,
+@@ -3380,7 +3852,6 @@
+ 						set_dtmf_payload,
+ 						hangup_connection,
+ 						set_local_capabilities,
+-						set_peer_capabilities,
+ 						remote_hold);
+ 		/* start the h.323 listener */
+ 		if (h323_start_listener(h323_signalling_port, bindaddr)) {
+@@ -3490,7 +3961,7 @@
+ 	return 0;
+ }
+ 
+-AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_LOAD_ORDER, "The NuFone Network's OpenH323 Channel Driver",
++AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_LOAD_ORDER, "H.323+ channel driver",
+ 		.load = load_module,
+ 		.unload = unload_module,
+ 		.reload = reload,
+Index: configure.ac
+===================================================================
+--- configure.ac	(revision 373402)
++++ configure.ac	(working copy)
+@@ -2021,14 +2021,11 @@
+ 	if test -n "${PWLIB_DIR}"; then
+ 		PWLIBDIR="${PWLIB_DIR}"
+ 	fi
++	AST_CHECK_PWLIB_PLATFORM()
+ 	AST_CHECK_PWLIB()
+-	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [1], [9], [2], [P[[WT]]LIB_VERSION])
++	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [2], [8], [4], [P[[WT]]LIB_VERSION])
+ 
+ 	if test "${HAS_PWLIB:-unset}" != "unset"; then
+-		AST_CHECK_PWLIB_PLATFORM()
+-
+-		PLATFORM_PWLIB="pt_${PWLIB_PLATFORM}_r"
+-
+ 		AST_CHECK_PWLIB_BUILD([PWLib], [PWLIB],
+ 			[Define if your system has the PWLib libraries.],
+ 			[#include "ptlib.h"],
+@@ -2041,9 +2038,8 @@
+ 		OPENH323DIR="${OPENH323_DIR}"
+ 	fi
+ 	AST_CHECK_OPENH323()
+-	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [17], [3], [], [1], [19], [0])
++	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [22], [0], [], [1], [24], [1])
+ 	AST_CHECK_OPENH323_BUILD()
+-	PLATFORM_OPENH323="h323_${PWLIB_PLATFORM}_${OPENH323_SUFFIX}"
+ 	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
+ 		[Define if your system has the OpenH323 libraries.],
+ 		[#include "ptlib.h"
+@@ -2321,7 +2317,7 @@
+ 	touch makeopts.acbak
+ fi
+ 
+-AC_CONFIG_FILES([build_tools/menuselect-deps makeopts channels/h323/Makefile])
++AC_CONFIG_FILES([build_tools/menuselect-deps makeopts channels/Makefile channels/h323/Makefile])
+ AST_CHECK_MANDATORY
+ 
+ if test -f build_tools/menuselect-deps; then
+Index: autoconf/ast_check_openh323.m4
+===================================================================
+--- autoconf/ast_check_openh323.m4	(revision 373402)
++++ autoconf/ast_check_openh323.m4	(working copy)
+@@ -1,132 +1,49 @@
+ AC_DEFUN([AST_CHECK_OPENH323], [
+-OPENH323_INCDIR=
+-OPENH323_LIBDIR=
+-AC_LANG_PUSH([C++])
+-if test "${OPENH323DIR:-unset}" != "unset" ; then
+-  AC_CHECK_HEADER(${OPENH323DIR}/version.h, HAS_OPENH323=1, )
+-fi
+-if test "${HAS_OPENH323:-unset}" = "unset" ; then
+-  AC_CHECK_HEADER(${PWLIBDIR}/../openh323/version.h, OPENH323DIR="${PWLIBDIR}/../openh323"; HAS_OPENH323=1, )
+-  if test "${HAS_OPENH323:-unset}" != "unset" ; then
+-    OPENH323DIR="${PWLIBDIR}/../openh323"
+-    saved_cppflags="${CPPFLAGS}"
+-    CPPFLAGS="${CPPFLAGS} -I${PWLIB_INCDIR}/openh323 -I${PWLIB_INCDIR}"
+-    AC_CHECK_HEADER(${OPENH323DIR}/include/h323.h, , OPENH323_INCDIR="${PWLIB_INCDIR}/openh323"; OPENH323_LIBDIR="${PWLIB_LIBDIR}", [#include <ptlib.h>])
+-    CPPFLAGS="${saved_cppflags}"
+-  else
+-    saved_cppflags="${CPPFLAGS}"
+-    CPPFLAGS="${CPPFLAGS} -I${HOME}/openh323/include -I${PWLIB_INCDIR}"
+-    AC_CHECK_HEADER(${HOME}/openh323/include/h323.h, HAS_OPENH323=1, , [#include <ptlib.h>])
+-    CPPFLAGS="${saved_cppflags}"
+-    if test "${HAS_OPENH323:-unset}" != "unset" ; then
+-      OPENH323DIR="${HOME}/openh323"
+-    else
+-      saved_cppflags="${CPPFLAGS}"
+-      CPPFLAGS="${CPPFLAGS} -I/usr/local/include/openh323 -I${PWLIB_INCDIR}"
+-      AC_CHECK_HEADER(/usr/local/include/openh323/h323.h, HAS_OPENH323=1, , [#include <ptlib.h>])
+-      CPPFLAGS="${saved_cppflags}"
+-      if test "${HAS_OPENH323:-unset}" != "unset" ; then
+-        OPENH323DIR="/usr/local/share/openh323"
+-        OPENH323_INCDIR="/usr/local/include/openh323"
+-        if test "x$LIB64" != "x" && test -d "/usr/local/lib64"; then
+-          OPENH323_LIBDIR="/usr/local/lib64"
+-        else
+-          OPENH323_LIBDIR="/usr/local/lib"
+-        fi
+-      else
+-        saved_cppflags="${CPPFLAGS}"
+-        CPPFLAGS="${CPPFLAGS} -I/usr/include/openh323 -I${PWLIB_INCDIR}"
+-        AC_CHECK_HEADER(/usr/include/openh323/h323.h, HAS_OPENH323=1, , [#include <ptlib.h>])
+-        CPPFLAGS="${saved_cppflags}"
+-        if test "${HAS_OPENH323:-unset}" != "unset" ; then
+-          OPENH323DIR="/usr/share/openh323"
+-          OPENH323_INCDIR="/usr/include/openh323"
+-          if test "x$LIB64" != "x" && test -d "/usr/local/lib64"; then
+-            OPENH323_LIBDIR="/usr/lib64"
+-          else
+-            OPENH323_LIBDIR="/usr/lib"
+-          fi
+-        fi
+-      fi
+-    fi
+-  fi
+-fi
++	OPENH323_INCDIR=
++	OPENH323_LIBDIR=
+ 
+-if test "${HAS_OPENH323:-unset}" != "unset" ; then
+-  if test "${OPENH323_INCDIR:-unset}" = "unset"; then
+-    OPENH323_INCDIR="${OPENH323DIR}/include"
+-  fi
+-  if test "${OPENH323_LIBDIR:-unset}" = "unset"; then
+-    OPENH323_LIBDIR="${OPENH323DIR}/lib"
+-  fi
++	AC_LANG_PUSH([C++])
+ 
+-  OPENH323_LIBDIR="`cd ${OPENH323_LIBDIR}; pwd`"
+-  OPENH323_INCDIR="`cd ${OPENH323_INCDIR}; pwd`"
+-  OPENH323DIR="`cd ${OPENH323DIR}; pwd`"
++	if test "${OPENH323DIR:-unset}" != "unset" ; then
++		AC_CHECK_HEADER(${OPENH323DIR}/version.h, HAS_OPENH323=1, )
++	fi
+ 
+-  AC_SUBST([OPENH323DIR])
+-  AC_SUBST([OPENH323_INCDIR])
+-  AC_SUBST([OPENH323_LIBDIR])
+-fi
+-  AC_LANG_POP([C++])
++	if test "${HAS_OPENH323:-unset}" != "unset" ; then
++		if test "${OPENH323_INCDIR:-unset}" = "unset"; then
++			OPENH323_INCDIR="${OPENH323DIR}/include"
++		fi
++		if test "${OPENH323_LIBDIR:-unset}" = "unset"; then
++			OPENH323_LIBDIR="${OPENH323DIR}/lib"
++		fi
++		AC_SUBST([OPENH323DIR])
++		AC_SUBST([OPENH323_INCDIR])
++		AC_SUBST([OPENH323_LIBDIR])
++	fi
++
++	AC_LANG_POP([C++])
+ ])
+ 
+ AC_DEFUN([AST_CHECK_OPENH323_BUILD], [
+ 	if test "${HAS_OPENH323:-unset}" != "unset"; then
+ 		AC_MSG_CHECKING(OpenH323 build option)
+-		OPENH323_SUFFIX=
+-		prefixes="h323_${PWLIB_PLATFORM}_ h323_ openh323"
+-		for pfx in $prefixes; do
+-			#files=`ls -l /usr/local/lib/lib${pfx}*.so* 2>/dev/null`
+-			files=`ls -l ${OPENH323_LIBDIR}/lib${pfx}*.so* 2>/dev/null`
+-			if test -z "$files"; then
+-				# check the default location
+-				files=`ls -l /usr/local/lib/lib${pfx}*.so* 2>/dev/null`
+-			fi
+-			libfile=
+-			if test -n "$files"; then
+-				for f in $files; do
+-					if test -f $f -a ! -L $f; then
+-						libfile=`basename $f`
+-						break;
+-					fi
+-				done
+-			fi
+-			if test -n "$libfile"; then
+-				OPENH323_PREFIX=$pfx
+-				break;
+-			fi
+-		done
+-		if test "${libfile:-unset}" != "unset"; then
+-			OPENH323_SUFFIX=`eval "echo ${libfile} | sed -e 's/lib${OPENH323_PREFIX}\(@<:@^.@:>@*\)\..*/\1/'"`
+-		fi
+-		case "${OPENH323_SUFFIX}" in
+-			n)
+-				OPENH323_BUILD="notrace";;
+-			r)
+-				OPENH323_BUILD="opt";;
+-			d)
+-				OPENH323_BUILD="debug";;
+-			*)
+-				if test "${OPENH323_PREFIX:-undef}" = "openh323"; then
+-					notrace=`eval "grep NOTRACE ${OPENH323DIR}/openh323u.mak | grep = | sed -e 's/@<:@A-Z0-9_@:>@*@<:@ 	@:>@*=@<:@ 	@:>@*//'"`
+-					if test "x$notrace" = "x"; then
+-						notrace="0"
+-					fi
+-					if test "$notrace" -ne 0; then
+-						OPENH323_BUILD="notrace"
+-					else
+-						OPENH323_BUILD="opt"
+-					fi
+-					OPENH323_LIB="-l${OPENH323_PREFIX}"
+-				else
+-					OPENH323_BUILD="notrace"
+-				fi
+-				;;
+-		esac
+-		AC_MSG_RESULT(${OPENH323_BUILD})
+ 
+-		AC_SUBST([OPENH323_SUFFIX])
++                OPENH323_PREFIX="h323_${PWLIB_PLATFORM}_"
++                OPENH323_SUFFIX=
++		OPENH323_BUILD=
++                files=`ls -l ${OPENH323_LIBDIR}/lib${OPENH323_PREFIX}_d.so* 2>/dev/null | wc -l 2>/dev/null`
++                if test $files -gt 0 ; then
++                        OPENH323_BUILD="debug"
++                        OPENH323_SUFFIX="_d"
++                else
++                        files=`ls -l ${OPENH323_LIBDIR}/lib${OPENH323_PREFIX}.so* 2>/dev/null | wc -l 2>/dev/null`
++                        if test $files -gt 0 ; then
++                                OPENH323_BUILD="opt"
++                        fi
++                fi
++                OPENH323_LIB="-L${OPENH323_LIBDIR} -l${OPENH323_PREFIX}${OPENH323_SUFFIX}"
++
++		AC_MSG_RESULT(${OPENH323_BUILD})
+ 		AC_SUBST([OPENH323_BUILD])
++		AC_SUBST([OPENH323_SUFFIX])
+ 	fi
+ ])
+Index: autoconf/ast_check_pwlib.m4
+===================================================================
+--- autoconf/ast_check_pwlib.m4	(revision 373402)
++++ autoconf/ast_check_pwlib.m4	(working copy)
+@@ -1,200 +1,68 @@
+ AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
+-PWLIB_OSTYPE=
+-case "$host_os" in
+-  linux*)          PWLIB_OSTYPE=linux ;
++	PWLIB_OSTYPE=
++	case "$host_os" in
++		linux*)
++			PWLIB_OSTYPE=linux ;
+   		;;
+-  freebsd* )       PWLIB_OSTYPE=FreeBSD ;
++		freebsd*)
++			PWLIB_OSTYPE=FreeBSD ;
+   		;;
+-  openbsd* )       PWLIB_OSTYPE=OpenBSD ;
+-				   ENDLDLIBS="-lossaudio" ;
++		*)
++			PWLIB_OSTYPE="$host_os" ;
++			AC_MSG_WARN("OS $PWLIB_OSTYPE build is not supported - proceed with caution!") ;
+ 		;;
+-  netbsd* )        PWLIB_OSTYPE=NetBSD ;
+-				   ENDLDLIBS="-lossaudio" ;
++	esac
++
++	PWLIB_MACHTYPE=
++	case "$host_cpu" in
++		x86 | i686 | i586 | i486 | i386 )
++			PWLIB_MACHTYPE=x86
+ 		;;
+-  solaris* | sunos* ) PWLIB_OSTYPE=solaris ;
++
++		x86_64)
++			PWLIB_MACHTYPE=x86_64 ;
++			P_64BIT=1 ;
++			LIB64=1 ;
+ 		;;
+-  darwin* )	       PWLIB_OSTYPE=Darwin ;
++		*)
++			PWLIB_MACHTYPE="$host_cpu";
++			AC_MSG_WARN("CPU $PWLIB_MACHTYPE build is not supported - proceed with caution!")
+ 		;;
+-  beos*)           PWLIB_OSTYPE=beos ;
+-                   STDCCFLAGS="$STDCCFLAGS -D__BEOS__"
+-		;;
+-  cygwin*)         PWLIB_OSTYPE=cygwin ;
+-		;;
+-  mingw*)	       PWLIB_OSTYPE=mingw ;
+-		           STDCCFLAGS="$STDCCFLAGS -mms-bitfields" ;
+-		           ENDLDLIBS="-lwinmm -lwsock32 -lsnmpapi -lmpr -lcomdlg32 -lgdi32 -lavicap32" ;
+-		;;
+-  * )		       PWLIB_OSTYPE="$host_os" ;
+-		           AC_MSG_WARN("OS $PWLIB_OSTYPE not recognized - proceed with caution!") ;
+-		;;
+-esac
++	esac
+ 
+-PWLIB_MACHTYPE=
+-case "$host_cpu" in
+-   x86 | i686 | i586 | i486 | i386 ) PWLIB_MACHTYPE=x86
+-                   ;;
++	PWLIB_PLATFORM="${PWLIB_OSTYPE}_${PWLIB_MACHTYPE}"
+ 
+-   x86_64)	   PWLIB_MACHTYPE=x86_64 ;
+-		   P_64BIT=1 ;
+-                   LIB64=1 ;
+-		   ;;
+-
+-   alpha | alphaev56 | alphaev6 | alphaev67 | alphaev7) PWLIB_MACHTYPE=alpha ;
+-		   P_64BIT=1 ;
+-		   ;;
+-
+-   sparc )         PWLIB_MACHTYPE=sparc ;
+-		   ;;
+-
+-   powerpc )       PWLIB_MACHTYPE=ppc ;
+-		   ;;
+-
+-   ppc )           PWLIB_MACHTYPE=ppc ;
+-		   ;;
+-
+-   powerpc64 )     PWLIB_MACHTYPE=ppc64 ;
+-		   P_64BIT=1 ;
+-                   LIB64=1 ;
+-		   ;;
+-
+-   ppc64 )         PWLIB_MACHTYPE=ppc64 ;
+-		   P_64BIT=1 ;
+-                   LIB64=1 ;
+-		   ;;
+-
+-   ia64)	   PWLIB_MACHTYPE=ia64 ;
+-		   P_64BIT=1 ;
+-	  	   ;;
+-
+-   s390x)	   PWLIB_MACHTYPE=s390x ;
+-		   P_64BIT=1 ;
+-                   LIB64=1 ;
+-		   ;;
+-
+-   s390)	   PWLIB_MACHTYPE=s390 ;
+-		   ;;
+-
+-   * )		   PWLIB_MACHTYPE="$host_cpu";
+-		   AC_MSG_WARN("CPU $PWLIB_MACHTYPE not recognized - proceed with caution!") ;;
+-esac
+-
+-PWLIB_PLATFORM="${PWLIB_OSTYPE}_${PWLIB_MACHTYPE}"
+-
+-AC_SUBST([PWLIB_PLATFORM])
++	AC_SUBST([PWLIB_PLATFORM])
+ ])
+ 
+ AC_DEFUN([AST_CHECK_PWLIB], [
+-PWLIB_INCDIR=
+-PWLIB_LIBDIR=
+-AC_LANG_PUSH([C++])
+-if test "${PWLIBDIR:-unset}" != "unset" ; then
+-  AC_CHECK_HEADER(${PWLIBDIR}/version.h, HAS_PWLIB=1, )
+-fi
+-if test "${HAS_PWLIB:-unset}" = "unset" ; then
+-  if test "${OPENH323DIR:-unset}" != "unset"; then
+-    AC_CHECK_HEADER(${OPENH323DIR}/../pwlib/version.h, HAS_PWLIB=1, )
+-  fi
+-  if test "${HAS_PWLIB:-unset}" != "unset" ; then
+-    PWLIBDIR="${OPENH323DIR}/../pwlib"
+-  else
+-    AC_CHECK_HEADER(${HOME}/pwlib/include/ptlib.h, HAS_PWLIB=1, )
+-    if test "${HAS_PWLIB:-unset}" != "unset" ; then
+-      PWLIBDIR="${HOME}/pwlib"
+-    else
+-      AC_CHECK_HEADER(/usr/local/include/ptlib.h, HAS_PWLIB=1, )
+-      if test "${HAS_PWLIB:-unset}" != "unset" ; then
+-        AC_PATH_PROG(PTLIB_CONFIG, ptlib-config, , /usr/local/bin$PATH_SEPARATOR/usr/local/share/pwlib/make)
+-        PWLIB_INCDIR="/usr/local/include"
+-        PWLIB_LIBDIR=`${PTLIB_CONFIG} --pwlibdir 2>/dev/null`
+-        if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
+-          PWLIB_LIBDIR=`${PTLIB_CONFIG} --ptlibdir 2>/dev/null`
+-        fi
+-        if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
+-          if test "x$LIB64" != "x"; then
+-            PWLIB_LIBDIR="/usr/local/lib64"
+-          else
+-            PWLIB_LIBDIR="/usr/local/lib"
+-          fi
+-        fi
+-        PWLIB_LIB=`${PTLIB_CONFIG} --ldflags --libs`
+-        PWLIB_LIB="-L${PWLIB_LIBDIR} `echo ${PWLIB_LIB}`"
+-      else
+-        AC_CHECK_HEADER(/usr/include/ptlib.h, HAS_PWLIB=1, )
+-        if test "${HAS_PWLIB:-unset}" != "unset" ; then
+-          AC_PATH_PROG(PTLIB_CONFIG, ptlib-config, , /usr/bin$PATH_SEPARATOR/usr/share/pwlib/make)
+-          PWLIB_INCDIR="/usr/include"
+-          PWLIB_LIBDIR=`${PTLIB_CONFIG} --pwlibdir 2>/dev/null`
+-          if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
+-            PWLIB_LIBDIR=`${PTLIB_CONFIG} --ptlibdir 2>/dev/null`
+-          fi
+-          if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
+-            if test "x$LIB64" != "x"; then
+-              PWLIB_LIBDIR="/usr/lib64"
+-            else
+-              PWLIB_LIBDIR="/usr/lib"
+-            fi
+-          fi
+-          PWLIB_LIB=`${PTLIB_CONFIG} --ldflags --libs`
+-          PWLIB_LIB="-L${PWLIB_LIBDIR} `echo ${PWLIB_LIB}`"
+-        fi
+-      fi
+-    fi
+-  fi
+-fi
++	PWLIB_INCDIR=
++	PWLIB_LIBDIR=
++	AC_LANG_PUSH([C++])
+ 
+-#if test "${HAS_PWLIB:-unset}" = "unset" ; then
+-#  echo "Cannot find pwlib - please install or set PWLIBDIR and try again"
+-#  exit
+-#fi
++	if test "${PWLIBDIR:-unset}" != "unset" ; then
++		AC_CHECK_HEADER(${PWLIBDIR}/version.h, HAS_PWLIB=1, )
++	fi
+ 
+-if test "${HAS_PWLIB:-unset}" != "unset" ; then
+-  if test "${PWLIBDIR:-unset}" = "unset" ; then
+-    if test "${PTLIB_CONFIG:-unset}" != "unset" ; then
+-      PWLIBDIR=`$PTLIB_CONFIG --prefix`
+-    else
+-      echo "Cannot find ptlib-config - please install and try again"
+-      exit
+-    fi
+-  fi
+-
+-  if test "x$PWLIBDIR" = "x/usr" -o "x$PWLIBDIR" = "x/usr/"; then
+-    PWLIBDIR="/usr/share/pwlib"
+-    PWLIB_INCDIR="/usr/include"
+-    if test "x$LIB64" != "x"; then
+-      PWLIB_LIBDIR="/usr/lib64"
+-    else
+-      PWLIB_LIBDIR="/usr/lib"
+-    fi
+-  fi
+-  if test "x$PWLIBDIR" = "x/usr/local" -o "x$PWLIBDIR" = "x/usr/"; then
+-    PWLIBDIR="/usr/local/share/pwlib"
+-    PWLIB_INCDIR="/usr/local/include"
+-    if test "x$LIB64" != "x"; then
+-      PWLIB_LIBDIR="/usr/local/lib64"
+-    else
+-      PWLIB_LIBDIR="/usr/local/lib"
+-    fi
+-  fi
+-
+-  if test "${PWLIB_INCDIR:-unset}" = "unset"; then
+-    PWLIB_INCDIR="${PWLIBDIR}/include"
+-  fi
+-  if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
+-    PWLIB_LIBDIR="${PWLIBDIR}/lib"
+-  fi
+-
+-  AC_SUBST([PWLIBDIR])
+-  AC_SUBST([PWLIB_INCDIR])
+-  AC_SUBST([PWLIB_LIBDIR])
+-fi
+-  AC_LANG_POP([C++])
++	if test "${HAS_PWLIB:-unset}" != "unset" ; then
++		if test "${PWLIB_INCDIR:-unset}" = "unset"; then
++			PWLIB_INCDIR="${PWLIBDIR}/include"
++		fi
++		if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
++			PWLIB_LIBDIR="${PWLIBDIR}/lib_${PWLIB_PLATFORM}"
++		fi
++		AC_SUBST([PWLIBDIR])
++		AC_SUBST([PWLIB_INCDIR])
++		AC_SUBST([PWLIB_LIBDIR])
++	fi
++AC_LANG_POP([C++])
+ ])
+ 
+ AC_DEFUN([AST_CHECK_PWLIB_VERSION], [
+ 	if test "x$7" != "x"; then
+-	   	VNAME="$7"
++	   	VNAME="$7 "
+        	else
+-	   	VNAME="$2_VERSION"
++	   	VNAME="$2_VERSION "
+ 	fi
+ 
+ 	if test "${HAS_$2:-unset}" != "unset"; then
+@@ -227,47 +95,52 @@
+ 
+ AC_DEFUN([AST_CHECK_PWLIB_BUILD], [
+ 	if test "${HAS_$2:-unset}" != "unset"; then
+-	   AC_MSG_CHECKING($1 installation validity)
++		AC_MSG_CHECKING($1 installation validity)
+ 
+-	   saved_cppflags="${CPPFLAGS}"
+-	   saved_libs="${LIBS}"
+-	   if test "${$2_LIB:-unset}" != "unset"; then
+-	      LIBS="${LIBS} ${$2_LIB} $7"
+-	   else
+-    	      LIBS="${LIBS} -L${$2_LIBDIR} -l${PLATFORM_$2} $7"
+-	   fi
+-	   CPPFLAGS="${CPPFLAGS} -I${$2_INCDIR} $6"
++		saved_cppflags="${CPPFLAGS}"
++		saved_libs="${LIBS}"
+ 
+-	   AC_LANG_PUSH([C++])
++		PWLIB_LIBDIR="${PWLIBDIR}/lib_${PWLIB_PLATFORM}"
++		PWLIB_PREFIX="pt"
++		OPENH323_LIBDIR="${OPENH323DIR}/lib"
++		OPENH323_PREFIX="h323_${PWLIB_PLATFORM}_"
+ 
+-	   AC_LINK_IFELSE(
+-		[AC_LANG_PROGRAM([$4],[$5])],
+-		[	AC_MSG_RESULT(yes) 
+-			ac_cv_lib_$2="yes" 
+-		],
+-		[	AC_MSG_RESULT(no) 
+-			ac_cv_lib_$2="no" 
+-		]
++		$2_SUFFIX=
++		files=`ls -l ${$2_LIBDIR}/lib${$2_PREFIX}_d.so* 2>/dev/null | wc -l 2>/dev/null`
++		if test $files -gt 0 ; then
++			$2_BUILD="debug"
++			$2_SUFFIX="_d"
++		else
++			files=`ls -l ${$2_LIBDIR}/lib${$2_PREFIX}.so* 2>/dev/null | wc -l 2>/dev/null`
++			if test $files -gt 0 ; then
++				$2_BUILD="opt"
++                       	fi
++               	fi
++		$2_LIB="-L${$2_LIBDIR} -l${$2_PREFIX}${$2_SUFFIX}"
++		LIBS="${LIBS} ${$2_LIB} $7"
++		CPPFLAGS="${CPPFLAGS} -I${$2_INCDIR} $6"
++
++		AC_LANG_PUSH([C++])
++		AC_LINK_IFELSE(
++			[AC_LANG_PROGRAM([$4],[$5])],
++			[	AC_MSG_RESULT(yes) 
++				ac_cv_lib_$2="yes" 
++			],
++			[	AC_MSG_RESULT(no) 
++				ac_cv_lib_$2="no" 
++			]
+ 		)
++		AC_LANG_POP([C++])
+ 
+-	   AC_LANG_POP([C++])
++		LIBS="${saved_libs}"
++		CPPFLAGS="${saved_cppflags}"
+ 
+-	   LIBS="${saved_libs}"
+-	   CPPFLAGS="${saved_cppflags}"
+-
+-	   if test "${ac_cv_lib_$2}" = "yes"; then
+-	      if test "${$2_LIB:-undef}" = "undef"; then
+-	         if test "${$2_LIBDIR}" != "" -a "${$2_LIBDIR}" != "/usr/lib"; then
+-	            $2_LIB="-L${$2_LIBDIR} -l${PLATFORM_$2}"
+-	         else
+-	            $2_LIB="-l${PLATFORM_$2}"
+-	         fi
+-	      fi
+-	      if test "${$2_INCDIR}" != "" -a "${$2_INCDIR}" != "/usr/include"; then
+-	         $2_INCLUDE="-I${$2_INCDIR}"
+-	      fi
+-	   	  PBX_$2=1
+-	   	  AC_DEFINE([HAVE_$2], 1, [$3])
+-	   fi
++		if test "${ac_cv_lib_$2}" = "yes"; then
++			if test "${$2_INCDIR}" != "" -a "${$2_INCDIR}" != "/usr/include"; then
++				$2_INCLUDE="-I${$2_INCDIR}"
++			fi
++			PBX_$2=1
++			AC_DEFINE([HAVE_$2], 1, [$3])
++		fi
+ 	fi
+ ])
+Index: main/editline/np/fgetln.c
+===================================================================
+--- main/editline/np/fgetln.c	(revision 373402)
++++ main/editline/np/fgetln.c	(working copy)
+@@ -37,6 +37,7 @@
+  */
+ 
+ #include "config.h"
++#include "sys.h"
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+Index: main/editline/np/strlcpy.c
+===================================================================
+--- main/editline/np/strlcpy.c	(revision 373402)
++++ main/editline/np/strlcpy.c	(working copy)
+@@ -28,6 +28,7 @@
+  */
+ 
+ #include "config.h"
++#include "sys.h"
+ #if defined(LIBC_SCCS) && !defined(lint)
+ #if 0
+ static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
+Index: main/editline/np/strlcat.c
+===================================================================
+--- main/editline/np/strlcat.c	(revision 373402)
++++ main/editline/np/strlcat.c	(working copy)
+@@ -26,6 +26,7 @@
+  */
+ 
+ #include "config.h"
++#include "sys.h"
+ #if defined(LIBC_SCCS) && !defined(lint)
+ static char *rcsid = "$OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp $";
+ #endif /* LIBC_SCCS and not lint */
+Index: res/pjproject/aconfigure.ac
+===================================================================
+--- res/pjproject/aconfigure.ac	(revision 373402)
++++ res/pjproject/aconfigure.ac	(working copy)
+@@ -44,9 +44,15 @@
+ dnl #
+ dnl # Setup CROSS_COMPILE variable
+ dnl #
+-if test -z "$CROSS_COMPILE"; then 
+-    CROSS_COMPILE=`echo ${CC} | sed 's/gcc//'`
+-fi
++#
++# Section commented out because it produces strange result under FreeBSD 7.2
++#
++#if test -z "$CROSS_COMPILE"; then 
++#    CC_IS_GCC=`cc -v 2>&1 | grep "^gcc " | wc -l`
++#    if test "${CC_IS_GCC}" == "0"; then
++#        CROSS_COMPILE=${CC}
++#    fi
++#fi
+ 
+ if test "$AR" = ""; then AR="${CROSS_COMPILE}ar rv"; fi
+ AC_SUBST(AR)
