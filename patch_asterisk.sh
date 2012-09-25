@@ -6,4 +6,4 @@ PACKAGE_LIST=$1
 
 cd "${SRC_BASE}/asterisk"
 echo -e "\nPatching '${PACKAGE}'...\n"
-patch -bNp0 < "${SRC_BASE}/asterisk-patchset/patchset.diff"
+patch -bENp0 < "${SRC_BASE}/asterisk-patchset/patchset.diff"
