@@ -1,5 +1,5 @@
---- chan_h323.c.orig	2012-01-14 21:38:51.000000000 +0600
-+++ chan_h323.c	2012-09-24 19:53:40.000000000 +0600
+--- asterisk/channels/chan_h323.c.orig	2012-01-14 21:38:51.000000000 +0600
++++ asterisk/channels/chan_h323.c	2012-10-03 15:15:00.000000000 +0600
 @@ -29,16 +29,14 @@
   *
   * \par See also
@@ -463,19 +463,23 @@
  	} else if (!strcasecmp(v->name, "hold")) {
  		if (!strcasecmp(v->value, "none"))
  			options->holdHandling = ~0;
-@@ -1463,7 +1748,6 @@
+@@ -1462,8 +1747,8 @@
+ 				return NULL;
  			} else {
  				struct ast_sockaddr tmp;
- 
--				tmp.ss.ss_family = AF_INET;
+-
+ 				tmp.ss.ss_family = AF_INET;
++
  				if (ast_get_ip(&tmp, v->value)) {
  					ASTOBJ_UNREF(user, oh323_destroy_user);
  					return NULL;
-@@ -1583,12 +1867,12 @@
+@@ -1582,13 +1867,14 @@
+ 			}
  			{
  				struct ast_sockaddr tmp;
- 
--				tmp.ss.ss_family = AF_INET;
+-
+ 				tmp.ss.ss_family = AF_INET;
++
  				if (ast_get_ip(&tmp, v->value)) {
  					ast_log(LOG_ERROR, "Could not determine IP for %s\n", v->value);
  					ASTOBJ_UNREF(peer, oh323_destroy_peer);
@@ -485,7 +489,7 @@
  				ast_sockaddr_to_sin(&tmp, &peer->addr);
  			}
  		} else if (!strcasecmp(v->name, "port")) {
-@@ -2118,6 +2402,129 @@
+@@ -2118,6 +2404,129 @@
  	return;
  }
  
@@ -615,7 +619,7 @@
  /*! \brief
    *	Call-back function to signal asterisk that the channel has been answered
    * Returns nothing
-@@ -2515,16 +2922,17 @@
+@@ -2515,16 +2924,17 @@
  		ast_debug(1, "DTMF payload on %s set to %d\n", token, payload);
  }
  
@@ -636,7 +640,7 @@
  	pvt->peercapability = capabilities;
  	pvt->jointcapability = pvt->options.capability & capabilities;
  	if (prefs) {
-@@ -2547,7 +2955,32 @@
+@@ -2547,7 +2957,32 @@
  			}
  		}
  	}
@@ -669,7 +673,7 @@
  }
  
  static void set_local_capabilities(unsigned call_reference, const char *token)
-@@ -2555,19 +2988,39 @@
+@@ -2555,19 +2990,39 @@
  	struct oh323_pvt *pvt;
  	int capability, dtmfmode, pref_codec;
  	struct ast_codec_pref prefs;
@@ -711,7 +715,7 @@
  
  	if (h323debug) {
  		int i;
-@@ -3032,6 +3485,7 @@
+@@ -3032,6 +3487,7 @@
  				ast_log(LOG_WARNING, "Invalid address: %s\n", v->value);
  			} else {
  				memcpy(&bindaddr.sin_addr, hp->h_addr, sizeof(bindaddr.sin_addr));
@@ -719,7 +723,7 @@
  			}
  		} else if (!strcasecmp(v->name, "tos")) {	/* Needs to be removed in next release */
  			ast_log(LOG_WARNING, "The \"tos\" setting is deprecated in this version of Asterisk. Please change to \"tos_audio\".\n");
-@@ -3306,6 +3760,22 @@
+@@ -3306,6 +3762,22 @@
  	.update_peer = oh323_set_rtp_peer,
  };
  
@@ -742,7 +746,7 @@
  static enum ast_module_load_result load_module(void)
  {
  	int res;
-@@ -3365,6 +3835,8 @@
+@@ -3365,6 +3837,8 @@
  
  		ast_rtp_glue_register(&oh323_rtp_glue);
  
@@ -751,7 +755,7 @@
  		/* Register our callback functions */
  		h323_callback_register(setup_incoming_call,
  						setup_outgoing_call,
-@@ -3379,7 +3851,6 @@
+@@ -3379,7 +3853,6 @@
  						set_dtmf_payload,
  						hangup_connection,
  						set_local_capabilities,
@@ -759,7 +763,7 @@
  						remote_hold);
  		/* start the h.323 listener */
  		if (h323_start_listener(h323_signalling_port, bindaddr)) {
-@@ -3489,7 +3960,7 @@
+@@ -3489,7 +3962,7 @@
  	return 0;
  }
  
