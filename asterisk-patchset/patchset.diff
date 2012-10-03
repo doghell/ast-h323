@@ -1,6 +1,6 @@
 Index: channels/h323/Makefile.in
 ===================================================================
---- channels/h323/Makefile.in	(revision 373402)
+--- channels/h323/Makefile.in	(revision 374290)
 +++ channels/h323/Makefile.in	(working copy)
 @@ -4,46 +4,28 @@
  # Make file for OpenH323 support layer
@@ -75,7 +75,7 @@ Index: channels/h323/Makefile.in
 +include $(OPENH323DIR)/openh323u.mak
 Index: channels/h323/caps_h323.cxx
 ===================================================================
---- channels/h323/caps_h323.cxx	(revision 373402)
+--- channels/h323/caps_h323.cxx	(revision 374290)
 +++ channels/h323/caps_h323.cxx	(working copy)
 @@ -3,6 +3,7 @@
  #include <h245.h>
@@ -300,7 +300,7 @@ Index: channels/h323/caps_h323.cxx
 +}
 Index: channels/h323/ast_h323.cxx
 ===================================================================
---- channels/h323/ast_h323.cxx	(revision 373402)
+--- channels/h323/ast_h323.cxx	(revision 374290)
 +++ channels/h323/ast_h323.cxx	(working copy)
 @@ -104,27 +104,17 @@
   */
@@ -1263,7 +1263,7 @@ Index: channels/h323/ast_h323.cxx
  int h323_clear_call(const char *call_token, int cause)
 Index: channels/h323/chan_h323.h
 ===================================================================
---- channels/h323/chan_h323.h	(revision 373402)
+--- channels/h323/chan_h323.h	(revision 374290)
 +++ channels/h323/chan_h323.h	(working copy)
 @@ -31,7 +31,18 @@
  
@@ -1353,7 +1353,7 @@ Index: channels/h323/chan_h323.h
  #endif
 Index: channels/h323/caps_h323.h
 ===================================================================
---- channels/h323/caps_h323.h	(revision 373402)
+--- channels/h323/caps_h323.h	(revision 374290)
 +++ channels/h323/caps_h323.h	(working copy)
 @@ -1,6 +1,8 @@
  #ifndef __AST_H323CAPS_H
@@ -1399,7 +1399,7 @@ Index: channels/h323/caps_h323.h
  #endif /* __AST_H323CAPS_H */
 Index: channels/h323/ast_h323.h
 ===================================================================
---- channels/h323/ast_h323.h	(revision 373402)
+--- channels/h323/ast_h323.h	(revision 374290)
 +++ channels/h323/ast_h323.h	(working copy)
 @@ -30,16 +30,19 @@
  #define AST_H323_H
@@ -1512,119 +1512,9 @@ Index: channels/h323/ast_h323.h
  #ifdef H323_H450
  
  #if VERSION(OPENH323_MAJOR, OPENH323_MINOR, OPENH323_BUILD) > VERSION(1,19,4)
-Index: channels/Makefile.in
-===================================================================
---- channels/Makefile.in	(revision 0)
-+++ channels/Makefile.in	(revision 0)
-@@ -0,0 +1,105 @@
-+#
-+# Asterisk -- A telephony toolkit for Linux.
-+# 
-+# Makefile for channel drivers
-+#
-+# Copyright (C) 1999-2006, Digium, Inc.
-+#
-+# This program is free software, distributed under the terms of
-+# the GNU General Public License
-+#
-+
-+-include $(ASTTOPDIR)/menuselect.makeopts $(ASTTOPDIR)/menuselect.makedeps
-+
-+MODULE_PREFIX=chan
-+MENUSELECT_CATEGORY=CHANNELS
-+MENUSELECT_DESCRIPTION=Channel Drivers
-+
-+ifeq ($(OSARCH),OpenBSD)
-+  PTLIB=-lpt
-+  H323LIB=-lh323
-+endif
-+
-+ifeq ($(OSARCH),linux-gnu)
-+  PTLIB=-lpt@OPENH323_SUFFIX@
-+  H323LIB=-lh323_linux_x86_@OPENH323_SUFFIX@
-+  CHANH323LIB=-ldl
-+endif
-+
-+ifeq ($(OSARCH),FreeBSD)
-+  PTLIB=-lpt@OPENH323_SUFFIX@
-+  H323LIB=-lh323_FreeBSD_x86_@OPENH323_SUFFIX@
-+  CHANH323LIB=-pthread
-+endif
-+
-+ifeq ($(wildcard h323/libchanh323.a),)
-+  MODULE_EXCLUDE += chan_h323
-+endif
-+
-+ifndef OPENH323DIR
-+  OPENH323DIR=$(HOME)/openh323
-+endif
-+
-+ifndef PWLIBDIR
-+  PWLIBDIR=$(HOME)/pwlib
-+endif
-+
-+all: _all
-+
-+include $(ASTTOPDIR)/Makefile.moddir_rules
-+
-+ifneq ($(findstring $(OSARCH), mingw32 cygwin ),)
-+  LIBS+= -lres_monitor.so -lres_features.so
-+endif
-+
-+ifeq ($(wildcard h323/chan_h323.so),)
-+include h323/Makefile.ast
-+endif
-+
-+clean::
-+	$(MAKE) -C misdn clean
-+	rm -f sip/*.o sip/*.i
-+	gmake -C h323 clean
-+
-+dist-clean::
-+	gmake -C h323 dist-clean
-+	rm -f Makefile
-+
-+$(if $(filter chan_iax2,$(EMBEDDED_MODS)),modules.link,chan_iax2.so): iax2-parser.o iax2-provision.o
-+iax2-parser.o iax2-provision.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_iax2)
-+$(if $(filter chan_sip,$(EMBEDDED_MODS)),modules.link,chan_sip.so): $(subst .c,.o,$(wildcard sip/*.c))
-+$(subst .c,.o,$(wildcard sip/*.c)): _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_sip)
-+$(if $(filter chan_dahdi,$(EMBEDDED_MODS)),modules.link,chan_dahdi.so): sig_analog.o sig_pri.o sig_ss7.o
-+sig_analog.o sig_pri.o sig_ss7.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_dahdi)
-+
-+ifneq ($(filter chan_h323,$(EMBEDDED_MODS)),)
-+modules.link: h323/libchanh323.a
-+else
-+chan_h323.so: chan_h323.o h323/libchanh323.a
-+	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
-+	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a"
-+	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a
-+endif
-+
-+chan_misdn.o: _ASTCFLAGS+=-Imisdn
-+
-+misdn_config.o: _ASTCFLAGS+=-Imisdn
-+
-+misdn/isdn_lib.o: _ASTCFLAGS+=-Wno-strict-aliasing
-+
-+$(if $(filter chan_misdn,$(EMBEDDED_MODS)),modules.link,chan_misdn.so): misdn_config.o misdn/isdn_lib.o misdn/isdn_msg_parser.o
-+misdn_config.o misdn/isdn_lib.o misdn/isdn_msg_parser.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_misdn)
-+
-+$(if $(filter chan_oss,$(EMBEDDED_MODS)),modules.link,chan_oss.so): console_video.o vgrabbers.o console_board.o
-+console_video.o vgrabbers.o console_board.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_oss)
-+
-+chan_usbradio.o: ./xpmr/xpmr.c ./xpmr/xpmr.h ./xpmr/xpmr_coef.h
-+
-+chan_usbradio.so: LIBS+=-lusb -lasound
-+chan_usbradio.so: _ASTCFLAGS+=-DNDEBUG
-+
-+h323/Makefile.ast:
-+	$(CMD_PREFIX) $(MAKE) -C h323 Makefile.ast
-+
-+h323/libchanh323.a: h323/Makefile.ast
-+	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: channels/chan_h323.c
 ===================================================================
---- channels/chan_h323.c	(revision 373402)
+--- channels/chan_h323.c	(revision 374290)
 +++ channels/chan_h323.c	(working copy)
 @@ -29,16 +29,14 @@
   *
@@ -1962,16 +1852,15 @@ Index: channels/chan_h323.c
  	default:
  		ast_log(LOG_WARNING, "OH323: Don't know how to indicate condition %d on %s\n", condition, token);
  		break;
-@@ -981,8 +1159,8 @@
+@@ -981,7 +1159,7 @@
  
  	{
  		struct ast_sockaddr tmp;
 -
- 		ast_sockaddr_from_sin(&tmp, &bindaddr);
 +		tmp.ss.ss_family = AF_INET;
+ 		ast_sockaddr_from_sin(&tmp, &bindaddr);
  		if (ast_find_ourip(&our_addr, &tmp, AF_INET)) {
  			ast_mutex_unlock(&pvt->lock);
- 			ast_log(LOG_ERROR, "Unable to locate local IP address for RTP stream\n");
 @@ -1025,6 +1203,42 @@
  	return 0;
  }
@@ -2153,29 +2042,27 @@ Index: channels/chan_h323.c
  	} else if (!strcasecmp(v->name, "hold")) {
  		if (!strcasecmp(v->value, "none"))
  			options->holdHandling = ~0;
-@@ -1465,7 +1750,6 @@
+@@ -1464,8 +1749,8 @@
+ 				return NULL;
  			} else {
  				struct ast_sockaddr tmp;
++				tmp.ss.ss_family = AF_INET;
  
 -				tmp.ss.ss_family = AF_INET;
  				if (ast_get_ip(&tmp, v->value)) {
  					ASTOBJ_UNREF(user, oh323_destroy_user);
  					return NULL;
-@@ -1585,12 +1869,12 @@
+@@ -1584,8 +1869,8 @@
+ 			}
  			{
  				struct ast_sockaddr tmp;
++				tmp.ss.ss_family = AF_INET;
  
 -				tmp.ss.ss_family = AF_INET;
  				if (ast_get_ip(&tmp, v->value)) {
  					ast_log(LOG_ERROR, "Could not determine IP for %s\n", v->value);
  					ASTOBJ_UNREF(peer, oh323_destroy_peer);
- 					return NULL;
- 				}
-+				tmp.ss.ss_family = AF_INET;
- 				ast_sockaddr_to_sin(&tmp, &peer->addr);
- 			}
- 		} else if (!strcasecmp(v->name, "port")) {
-@@ -2079,11 +2363,11 @@
+@@ -2079,11 +2364,11 @@
  			if (!(ast_format_cap_identical(ast_channel_nativeformats(pvt->owner), pvt_native))) {
  				if (h323debug) {
  					char tmp[256], tmp2[256];
@@ -2190,7 +2077,7 @@ Index: channels/chan_h323.c
  			}
  			if (pvt->options.progress_audio)
  				ast_queue_control(pvt->owner, AST_CONTROL_PROGRESS);
-@@ -2119,6 +2403,129 @@
+@@ -2119,6 +2404,129 @@
  	return;
  }
  
@@ -2320,7 +2207,7 @@ Index: channels/chan_h323.c
  /*! \brief
    *	Call-back function to signal asterisk that the channel has been answered
    * Returns nothing
-@@ -2516,16 +2923,17 @@
+@@ -2516,16 +2924,17 @@
  		ast_debug(1, "DTMF payload on %s set to %d\n", token, payload);
  }
  
@@ -2341,7 +2228,7 @@ Index: channels/chan_h323.c
  	pvt->peercapability = capabilities;
  	pvt->jointcapability = pvt->options.capability & capabilities;
  	if (prefs) {
-@@ -2548,7 +2956,32 @@
+@@ -2548,7 +2957,32 @@
  			}
  		}
  	}
@@ -2374,7 +2261,7 @@ Index: channels/chan_h323.c
  }
  
  static void set_local_capabilities(unsigned call_reference, const char *token)
-@@ -2556,19 +2989,39 @@
+@@ -2556,19 +2990,39 @@
  	struct oh323_pvt *pvt;
  	int capability, dtmfmode, pref_codec;
  	struct ast_codec_pref prefs;
@@ -2416,7 +2303,7 @@ Index: channels/chan_h323.c
  
  	if (h323debug) {
  		int i;
-@@ -3033,6 +3486,7 @@
+@@ -3033,6 +3487,7 @@
  				ast_log(LOG_WARNING, "Invalid address: %s\n", v->value);
  			} else {
  				memcpy(&bindaddr.sin_addr, hp->h_addr, sizeof(bindaddr.sin_addr));
@@ -2424,7 +2311,7 @@ Index: channels/chan_h323.c
  			}
  		} else if (!strcasecmp(v->name, "tos")) {	/* Needs to be removed in next release */
  			ast_log(LOG_WARNING, "The \"tos\" setting is deprecated in this version of Asterisk. Please change to \"tos_audio\".\n");
-@@ -3220,7 +3674,7 @@
+@@ -3220,7 +3675,7 @@
  	struct oh323_pvt *pvt;
  	enum ast_rtp_glue_result res = AST_RTP_GLUE_RESULT_LOCAL;
  
@@ -2433,7 +2320,7 @@ Index: channels/chan_h323.c
  		return AST_RTP_GLUE_RESULT_FORBID;
  
  	ast_mutex_lock(&pvt->lock);
-@@ -3307,6 +3761,22 @@
+@@ -3307,6 +3762,22 @@
  	.update_peer = oh323_set_rtp_peer,
  };
  
@@ -2456,7 +2343,7 @@ Index: channels/chan_h323.c
  static enum ast_module_load_result load_module(void)
  {
  	int res;
-@@ -3366,6 +3836,8 @@
+@@ -3366,6 +3837,8 @@
  
  		ast_rtp_glue_register(&oh323_rtp_glue);
  
@@ -2465,7 +2352,7 @@ Index: channels/chan_h323.c
  		/* Register our callback functions */
  		h323_callback_register(setup_incoming_call,
  						setup_outgoing_call,
-@@ -3380,7 +3852,6 @@
+@@ -3380,7 +3853,6 @@
  						set_dtmf_payload,
  						hangup_connection,
  						set_local_capabilities,
@@ -2473,7 +2360,7 @@ Index: channels/chan_h323.c
  						remote_hold);
  		/* start the h.323 listener */
  		if (h323_start_listener(h323_signalling_port, bindaddr)) {
-@@ -3490,7 +3961,7 @@
+@@ -3490,7 +3962,7 @@
  	return 0;
  }
  
@@ -2484,126 +2371,79 @@ Index: channels/chan_h323.c
  		.reload = reload,
 Index: channels/Makefile
 ===================================================================
---- channels/Makefile	(revision 373402)
+--- channels/Makefile	(revision 374290)
 +++ channels/Makefile	(working copy)
-@@ -1,114 +0,0 @@
--#
--# Asterisk -- A telephony toolkit for Linux.
--# 
--# Makefile for channel drivers
--#
--# Copyright (C) 1999-2006, Digium, Inc.
--#
--# This program is free software, distributed under the terms of
--# the GNU General Public License
--#
--
---include $(ASTTOPDIR)/menuselect.makeopts $(ASTTOPDIR)/menuselect.makedeps
--
--MODULE_PREFIX=chan
--MENUSELECT_CATEGORY=CHANNELS
--MENUSELECT_DESCRIPTION=Channel Drivers
--
--ifeq ($(OSARCH),OpenBSD)
--  PTLIB=-lpt
--  H323LIB=-lh323
--endif
--
--ifeq ($(OSARCH),linux-gnu)
+@@ -21,22 +21,17 @@
+ endif
+ 
+ ifeq ($(OSARCH),linux-gnu)
 -  PTLIB=-lpt_linux_x86_r
 -  H323LIB=-lh323_linux_x86_r
--  CHANH323LIB=-ldl
--endif
--
--ifeq ($(OSARCH),FreeBSD)
++  PTLIB=-lpt_d
++  H323LIB=-lh323_linux_x86__d
+   CHANH323LIB=-ldl
+ endif
+ 
+ ifeq ($(OSARCH),FreeBSD)
 -  PTLIB=-lpt_FreeBSD_x86_r
 -  H323LIB=-lh323_FreeBSD_x86_r
--  CHANH323LIB=-pthread
--endif
--
++  PTLIB=-lpt_d
++  H323LIB=-lh323_FreeBSD_x86__d
+   CHANH323LIB=-pthread
+ endif
+ 
 -ifeq ($(OSARCH),NetBSD)
 -  PTLIB=-lpt_NetBSD_x86_r
 -  H323LIB=-lh323_NetBSD_x86_r
 -endif
 -
--ifeq ($(wildcard h323/libchanh323.a),)
--  MODULE_EXCLUDE += chan_h323
--endif
--
--ifndef OPENH323DIR
--  OPENH323DIR=$(HOME)/openh323
--endif
--
--ifndef PWLIBDIR
--  PWLIBDIR=$(HOME)/pwlib
--endif
--
--all: _all
--
--include $(ASTTOPDIR)/Makefile.moddir_rules
--
--ifneq ($(findstring $(OSARCH), mingw32 cygwin ),)
--  LIBS+= -lres_monitor.so -lres_features.so
--endif
--
+ ifeq ($(wildcard h323/libchanh323.a),)
+   MODULE_EXCLUDE += chan_h323
+ endif
+@@ -57,17 +52,18 @@
+   LIBS+= -lres_monitor.so -lres_features.so
+ endif
+ 
 -ifneq ($(wildcard h323/Makefile.ast),)
--include h323/Makefile.ast
--endif
--
--clean::
--	$(MAKE) -C misdn clean
--	rm -f sip/*.o sip/*.i
++ifeq ($(wildcard h323/chan_h323.so),)
+ include h323/Makefile.ast
+ endif
+ 
+ clean::
+ 	$(MAKE) -C misdn clean
+ 	rm -f sip/*.o sip/*.i
 -	rm -f h323/libchanh323.a h323/Makefile.ast h323/*.o h323/*.dep
--
--dist-clean::
++	gmake -C h323 clean
+ 
+ dist-clean::
 -	rm -f h323/Makefile
--
--$(if $(filter chan_iax2,$(EMBEDDED_MODS)),modules.link,chan_iax2.so): iax2-parser.o iax2-provision.o
--iax2-parser.o iax2-provision.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_iax2)
--$(if $(filter chan_sip,$(EMBEDDED_MODS)),modules.link,chan_sip.so): $(subst .c,.o,$(wildcard sip/*.c))
--$(subst .c,.o,$(wildcard sip/*.c)): _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_sip)
--$(if $(filter chan_dahdi,$(EMBEDDED_MODS)),modules.link,chan_dahdi.so): sig_analog.o sig_pri.o sig_ss7.o
--sig_analog.o sig_pri.o sig_ss7.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_dahdi)
--
--ifneq ($(filter chan_h323,$(EMBEDDED_MODS)),)
--modules.link: h323/libchanh323.a
--else
++	gmake -C h323 dist-clean
++	rm -f Makefile
+ 
+ $(if $(filter chan_iax2,$(EMBEDDED_MODS)),modules.link,chan_iax2.so): iax2-parser.o iax2-provision.o
+ iax2-parser.o iax2-provision.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_iax2)
+@@ -79,16 +75,11 @@
+ ifneq ($(filter chan_h323,$(EMBEDDED_MODS)),)
+ modules.link: h323/libchanh323.a
+ else
 -ifeq ($(OSARCH),linux-gnu)
--chan_h323.so: chan_h323.o h323/libchanh323.a
--	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
+ chan_h323.so: chan_h323.o h323/libchanh323.a
+ 	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
 -	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) -o $@ $< h323/libchanh323.a $(H323LDLIBS)
 -else
 -chan_h323.so: chan_h323.o h323/libchanh323.a
 -	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
 -	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) -o $@ $< h323/libchanh323.a $(CHANH323LIB) -L$(PWLIBDIR)/lib $(PTLIB) -L$(OPENH323DIR)/lib $(H323LIB) -L/usr/lib -lcrypto -lssl -lexpat
++	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a"
++	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a
+ endif
 -endif
--endif
--
--chan_misdn.o: _ASTCFLAGS+=-Imisdn
--
--misdn_config.o: _ASTCFLAGS+=-Imisdn
--
--misdn/isdn_lib.o: _ASTCFLAGS+=-Wno-strict-aliasing
--
--$(if $(filter chan_misdn,$(EMBEDDED_MODS)),modules.link,chan_misdn.so): misdn_config.o misdn/isdn_lib.o misdn/isdn_msg_parser.o
--misdn_config.o misdn/isdn_lib.o misdn/isdn_msg_parser.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_misdn)
--
--$(if $(filter chan_oss,$(EMBEDDED_MODS)),modules.link,chan_oss.so): console_video.o vgrabbers.o console_board.o
--console_video.o vgrabbers.o console_board.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_oss)
--
--chan_usbradio.o: ./xpmr/xpmr.c ./xpmr/xpmr.h ./xpmr/xpmr_coef.h
--
--chan_usbradio.so: LIBS+=-lusb -lasound
--chan_usbradio.so: _ASTCFLAGS+=-DNDEBUG
--
--h323/Makefile.ast:
--	$(CMD_PREFIX) $(MAKE) -C h323 Makefile.ast
--
--h323/libchanh323.a: h323/Makefile.ast
--	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
+ 
+ chan_misdn.o: _ASTCFLAGS+=-Imisdn
+ 
 Index: configure.ac
 ===================================================================
---- configure.ac	(revision 373402)
+--- configure.ac	(revision 374290)
 +++ configure.ac	(working copy)
 @@ -2021,14 +2021,11 @@
  	if test -n "${PWLIB_DIR}"; then
@@ -2644,7 +2484,7 @@ Index: configure.ac
  if test -f build_tools/menuselect-deps; then
 Index: autoconf/ast_check_openh323.m4
 ===================================================================
---- autoconf/ast_check_openh323.m4	(revision 373402)
+--- autoconf/ast_check_openh323.m4	(revision 374290)
 +++ autoconf/ast_check_openh323.m4	(working copy)
 @@ -1,132 +1,49 @@
  AC_DEFUN([AST_CHECK_OPENH323], [
@@ -2817,7 +2657,7 @@ Index: autoconf/ast_check_openh323.m4
  ])
 Index: autoconf/ast_check_pwlib.m4
 ===================================================================
---- autoconf/ast_check_pwlib.m4	(revision 373402)
+--- autoconf/ast_check_pwlib.m4	(revision 374290)
 +++ autoconf/ast_check_pwlib.m4	(working copy)
 @@ -1,200 +1,68 @@
  AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
@@ -3157,7 +2997,7 @@ Index: autoconf/ast_check_pwlib.m4
  ])
 Index: include/asterisk/autoconfig.h.in
 ===================================================================
---- include/asterisk/autoconfig.h.in	(revision 373402)
+--- include/asterisk/autoconfig.h.in	(revision 374290)
 +++ include/asterisk/autoconfig.h.in	(working copy)
 @@ -1223,6 +1223,11 @@
  /* Define to 1 if running on Darwin. */
@@ -3173,7 +3013,7 @@ Index: include/asterisk/autoconfig.h.in
  
 Index: main/editline/np/fgetln.c
 ===================================================================
---- main/editline/np/fgetln.c	(revision 373402)
+--- main/editline/np/fgetln.c	(revision 374290)
 +++ main/editline/np/fgetln.c	(working copy)
 @@ -37,6 +37,7 @@
   */
@@ -3185,7 +3025,7 @@ Index: main/editline/np/fgetln.c
  #include <unistd.h>
 Index: main/editline/np/strlcpy.c
 ===================================================================
---- main/editline/np/strlcpy.c	(revision 373402)
+--- main/editline/np/strlcpy.c	(revision 374290)
 +++ main/editline/np/strlcpy.c	(working copy)
 @@ -28,6 +28,7 @@
   */
@@ -3197,7 +3037,7 @@ Index: main/editline/np/strlcpy.c
  static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
 Index: main/editline/np/strlcat.c
 ===================================================================
---- main/editline/np/strlcat.c	(revision 373402)
+--- main/editline/np/strlcat.c	(revision 374290)
 +++ main/editline/np/strlcat.c	(working copy)
 @@ -26,6 +26,7 @@
   */
@@ -3209,7 +3049,7 @@ Index: main/editline/np/strlcat.c
  #endif /* LIBC_SCCS and not lint */
 Index: res/pjproject/aconfigure.ac
 ===================================================================
---- res/pjproject/aconfigure.ac	(revision 373402)
+--- res/pjproject/aconfigure.ac	(revision 374290)
 +++ res/pjproject/aconfigure.ac	(working copy)
 @@ -44,9 +44,15 @@
  dnl #
