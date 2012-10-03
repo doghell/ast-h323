@@ -1,5 +1,5 @@
 --- asterisk/channels/h323/caps_h323.cxx.orig	2009-02-19 01:11:57.000000000 +0500
-+++ asterisk/channels/h323/caps_h323.cxx	2012-09-20 16:49:28.000000000 +0600
++++ asterisk/channels/h323/caps_h323.cxx	2012-10-03 18:21:54.000000000 +0600
 @@ -3,6 +3,7 @@
  #include <h245.h>
  #include "ast_h323.h"
@@ -21,7 +21,23 @@
  
  OPAL_MEDIA_FORMAT_DECLARE(OpalG711ALaw64kFormat,
  	OPAL_G711_ALAW_64K,
-@@ -381,3 +382,199 @@
+@@ -80,6 +81,7 @@
+ 	240,	// 30 milliseconds
+ 	OpalMediaFormat::AudioTimeUnits,
+ 	0);
++/*
+ OPAL_MEDIA_FORMAT_DECLARE(OpalGSM0610Format,
+ 	OPAL_GSM0610,
+ 	OpalMediaFormat::DefaultAudioSessionID,
+@@ -112,6 +114,7 @@
+ 	OpalMediaFormat::AudioTimeUnits,
+ 	0);
+ #endif
++*/
+ 
+ /*
+  * Capability: G.711
+@@ -381,3 +384,199 @@
  {
  	return PString(CISCO_DTMF_RELAY);
  }
