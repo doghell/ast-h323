@@ -7,8 +7,8 @@ cd "${SRC_BASE}/asterisk-g72x"
 
 CPU_VENDOR=`grep -m 1 -P "^vendor_id\s+:\s+" /proc/cpuinfo | sed -r 's/^.*:.*(Intel|AMD).*$/\1/'`
 CPU_MODEL=`grep -m 1 -P "^model name\s+:\s+" /proc/cpuinfo | sed -r 's/^.*:.*(Core\(TM\)2|Opteron).*$/\1/'`
-CPU_SSE3_FLAG=`grep -m 1 -P "^flags\s+:\s+.*\spni\s.*$" /proc/cpuinfo | wc -l`
-CPU_SSE4_FLAG=`grep -m 1 -P "^flags\s+:\s+.*\ssse4\s.*$" /proc/cpuinfo | wc -l`
+CPU_SSE3_FLAG=`grep -m 1 -P "^flags\s+:\s+.*sse3\s*$" /proc/cpuinfo | wc -l`
+CPU_SSE4_FLAG=`grep -m 1 -P "^flags\s+:\s+.*sse4\s*$" /proc/cpuinfo | wc -l`
 
 CPU_SYSTEM=`uname -i`
 if [ "${CPU_SYSTEM}" == "x86_64" ]; then
@@ -51,5 +51,5 @@ case "${CPU_VENDOR}" in
 esac
 
 for CODEC in g723 g729 ; do
-	cp -vf "codec_${CODEC}-ast100-gcc4-glibc-${CPU_SUFFIX}.so" "${HOME}/lib/asterisk/modules/codec_${CODEC}.so"
+	cp -vf "codec_${CODEC}-ast18-gcc4-glibc-${CPU_SUFFIX}.so" ${HOME}/lib/asterisk/modules
 done
