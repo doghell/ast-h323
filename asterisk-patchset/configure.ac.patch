@@ -1,5 +1,5 @@
 --- asterisk/configure.ac.orig	2012-04-12 21:01:13.000000000 +0600
-+++ asterisk/configure.ac	2012-09-20 18:06:48.000000000 +0600
++++ asterisk/configure.ac	2012-10-03 15:13:19.000000000 +0600
 @@ -1937,14 +1937,11 @@
  	if test -n "${PWLIB_DIR}"; then
  		PWLIBDIR="${PWLIB_DIR}"
