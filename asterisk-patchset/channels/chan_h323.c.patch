@@ -1,5 +1,5 @@
 --- asterisk/channels/chan_h323.c.orig	2012-01-14 21:23:32.000000000 +0600
-+++ asterisk/channels/chan_h323.c	2012-10-09 11:21:16.000000000 +0600
++++ asterisk/channels/chan_h323.c	2012-10-10 16:31:18.000000000 +0600
 @@ -29,7 +29,7 @@
   *
   * \par See also
@@ -111,7 +111,18 @@
  };
  
  static const char* redirectingreason2str(int redirectingreason)
-@@ -820,6 +858,12 @@
+@@ -452,6 +490,10 @@
+ 	if (pvt->rtp) {
+ 		ast_rtp_instance_destroy(pvt->rtp);
+ 	}
++	/* Destroy UDPTL session if exists (d.kochmashev@gmail.com) */
++	if (pvt->udptl) {
++		ast_udptl_destroy(pvt->udptl);
++	}
+ 
+ 	/* Free dsp used for in-band DTMF detection */
+ 	if (pvt->vad) {
+@@ -820,6 +862,12 @@
  		else
  			fr = &ast_null_frame;
  		break;
@@ -124,7 +135,7 @@
  	default:
  		ast_log(LOG_ERROR, "Unable to handle fd %d on channel %s\n", c->fdno, c->name);
  		fr = &ast_null_frame;
-@@ -836,6 +880,15 @@
+@@ -836,6 +884,15 @@
  	if (frame->frametype != AST_FRAME_VOICE) {
  		if (frame->frametype == AST_FRAME_IMAGE) {
  			return 0;
@@ -140,7 +151,7 @@
  		} else {
  			ast_log(LOG_WARNING, "Can't send %d type frames with H323 write\n", frame->frametype);
  			return 0;
-@@ -858,6 +911,120 @@
+@@ -858,6 +915,120 @@
  	return res;
  }
  
@@ -261,7 +272,7 @@
  static int oh323_indicate(struct ast_channel *c, int condition, const void *data, size_t datalen)
  {
  
-@@ -866,6 +1033,9 @@
+@@ -866,6 +1037,9 @@
  	int res = -1;
  	int got_progress;
  
@@ -271,7 +282,7 @@
  	ast_mutex_lock(&pvt->lock);
  	token = (pvt->cd.call_token ? ast_strdup(pvt->cd.call_token) : NULL);
  	got_progress = pvt->got_progress;
-@@ -933,6 +1103,14 @@
+@@ -933,6 +1107,14 @@
  	case AST_CONTROL_PROCEEDING:
  	case -1:
  		break;
@@ -286,7 +297,7 @@
  	default:
  		ast_log(LOG_WARNING, "OH323: Don't know how to indicate condition %d on %s\n", condition, token);
  		break;
-@@ -970,8 +1148,8 @@
+@@ -970,8 +1152,8 @@
  
  	{
  		struct ast_sockaddr tmp;
@@ -296,7 +307,7 @@
  		if (ast_find_ourip(&our_addr, &tmp, AF_INET)) {
  			ast_mutex_unlock(&pvt->lock);
  			ast_log(LOG_ERROR, "Unable to locate local IP address for RTP stream\n");
-@@ -1014,6 +1192,43 @@
+@@ -1014,6 +1196,43 @@
  	return 0;
  }
  
@@ -340,7 +351,7 @@
  /*! \brief Private structure should be locked on a call */
  static struct ast_channel *__oh323_new(struct oh323_pvt *pvt, int state, const char *host, const char *linkedid)
  {
-@@ -1060,11 +1275,15 @@
+@@ -1060,11 +1279,15 @@
  			ast_channel_set_fd(ch, 3, ast_rtp_instance_fd(pvt->vrtp, 1));
  		}
  #endif
@@ -358,7 +369,22 @@
  		if (state == AST_STATE_RING) {
  			ch->rings = 1;
  		}
-@@ -1156,6 +1375,7 @@
+@@ -1140,7 +1363,13 @@
+ 		}
+ 		if (!pvt->cd.call_token) {
+ 			ast_log(LOG_ERROR, "Not enough memory to alocate call token\n");
+-			ast_rtp_instance_destroy(pvt->rtp);
++			/* Destroy RTP and UDPTL sessions if exist (d.kochmashev@gmail.com) */
++			if (pvt->rtp) {
++				ast_rtp_instance_destroy(pvt->rtp);
++			}
++			if (pvt->udptl) {
++				ast_udptl_destroy(pvt->udptl);
++			}
+ 			ast_free(pvt);
+ 			return NULL;
+ 		}
+@@ -1156,6 +1385,7 @@
  	}
  	ast_copy_string(pvt->context, default_context, sizeof(pvt->context));
  	pvt->newstate = pvt->newcontrol = pvt->newdigit = pvt->update_rtp_info = pvt->DTMFsched = -1;
@@ -366,7 +392,7 @@
  	ast_mutex_init(&pvt->lock);
  	/* Add to interface list */
  	ast_mutex_lock(&iflock);
-@@ -1191,6 +1411,47 @@
+@@ -1191,6 +1421,47 @@
  	return NULL;
  }
  
@@ -414,7 +440,7 @@
  static int update_state(struct oh323_pvt *pvt, int state, int signal)
  {
  	if (!pvt)
-@@ -1335,14 +1596,26 @@
+@@ -1335,14 +1606,26 @@
  		options->silenceSuppression = ast_true(v->value);
  	} else if (!strcasecmp(v->name, "progress_setup")) {
  		tmp = atoi(v->value);
@@ -443,7 +469,7 @@
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d, assuming 0\n", v->value, v->name, v->lineno);
  			tmp = 0;
  		}
-@@ -1364,6 +1637,19 @@
+@@ -1364,6 +1647,19 @@
  			options->tunnelOptions |= H323_TUNNEL_QSIG;
  		else
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d\n", v->value, v->name, v->lineno);
@@ -463,7 +489,7 @@
  	} else if (!strcasecmp(v->name, "hold")) {
  		if (!strcasecmp(v->value, "none"))
  			options->holdHandling = ~0;
-@@ -1430,8 +1716,8 @@
+@@ -1430,8 +1726,8 @@
  				return NULL;
  			} else {
  				struct ast_sockaddr tmp;
@@ -473,7 +499,7 @@
  				if (ast_get_ip(&tmp, v->value)) {
  					ASTOBJ_UNREF(user, oh323_destroy_user);
  					return NULL;
-@@ -1550,13 +1836,14 @@
+@@ -1550,13 +1846,14 @@
  			}
  			{
  				struct ast_sockaddr tmp;
@@ -489,7 +515,7 @@
  				ast_sockaddr_to_sin(&tmp, &peer->addr);
  			}
  		} else if (!strcasecmp(v->name, "port")) {
-@@ -2083,6 +2370,129 @@
+@@ -2083,6 +2380,129 @@
  	return;
  }
  
@@ -619,7 +645,19 @@
  /*! \brief
    *	Call-back function to signal asterisk that the channel has been answered
    * Returns nothing
-@@ -2480,16 +2890,17 @@
+@@ -2413,6 +2833,11 @@
+ 		ast_rtp_instance_destroy(pvt->rtp);
+ 		pvt->rtp = NULL;
+ 	}
++	/* Destroy UDPTL session if exist (d.kochmashev@gmail.com) */
++	if (pvt->udptl) {
++		ast_udptl_destroy(pvt->udptl);
++		pvt->udptl = NULL;
++	}
+ 	/* Free dsp used for in-band DTMF detection */
+ 	if (pvt->vad) {
+ 		ast_dsp_free(pvt->vad);
+@@ -2480,16 +2905,17 @@
  		ast_debug(1, "DTMF payload on %s set to %d\n", token, payload);
  }
  
@@ -640,7 +678,7 @@
  	pvt->peercapability = capabilities;
  	pvt->jointcapability = pvt->options.capability & capabilities;
  	if (prefs) {
-@@ -2512,7 +2923,32 @@
+@@ -2512,7 +2938,32 @@
  			}
  		}
  	}
@@ -673,7 +711,7 @@
  }
  
  static void set_local_capabilities(unsigned call_reference, const char *token)
-@@ -2520,19 +2956,39 @@
+@@ -2520,19 +2971,39 @@
  	struct oh323_pvt *pvt;
  	int capability, dtmfmode, pref_codec;
  	struct ast_codec_pref prefs;
@@ -715,7 +753,7 @@
  
  	if (h323debug) {
  		int i;
-@@ -2997,6 +3453,7 @@
+@@ -2997,6 +3468,7 @@
  				ast_log(LOG_WARNING, "Invalid address: %s\n", v->value);
  			} else {
  				memcpy(&bindaddr.sin_addr, hp->h_addr, sizeof(bindaddr.sin_addr));
@@ -723,7 +761,7 @@
  			}
  		} else if (!strcasecmp(v->name, "tos")) {	/* Needs to be removed in next release */
  			ast_log(LOG_WARNING, "The \"tos\" setting is deprecated in this version of Asterisk. Please change to \"tos_audio\".\n");
-@@ -3271,6 +3728,22 @@
+@@ -3271,6 +3743,22 @@
  	.update_peer = oh323_set_rtp_peer,
  };
  
@@ -746,7 +784,7 @@
  static enum ast_module_load_result load_module(void)
  {
  	int res;
-@@ -3325,6 +3798,8 @@
+@@ -3325,6 +3813,8 @@
  
  		ast_rtp_glue_register(&oh323_rtp_glue);
  
@@ -755,7 +793,7 @@
  		/* Register our callback functions */
  		h323_callback_register(setup_incoming_call,
  						setup_outgoing_call,
-@@ -3339,7 +3814,6 @@
+@@ -3339,7 +3829,6 @@
  						set_dtmf_payload,
  						hangup_connection,
  						set_local_capabilities,
@@ -763,7 +801,7 @@
  						remote_hold);
  		/* start the h.323 listener */
  		if (h323_start_listener(h323_signalling_port, bindaddr)) {
-@@ -3448,7 +3922,7 @@
+@@ -3448,7 +3937,7 @@
  	return 0;
  }
  
