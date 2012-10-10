@@ -1,5 +1,5 @@
 --- asterisk/channels/h323/ast_h323.cxx.orig	2010-05-25 04:05:15.000000000 +0600
-+++ asterisk/channels/h323/ast_h323.cxx	2012-09-21 11:15:10.000000000 +0600
++++ asterisk/channels/h323/ast_h323.cxx	2012-10-10 14:15:02.000000000 +0600
 @@ -104,27 +104,17 @@
   */
  
@@ -952,3 +952,23 @@
  };
  
  int h323_clear_call(const char *call_token, int cause)
+@@ -2664,7 +3173,7 @@
+ #undef endl
+ void h323_end_process(void)
+ {
+-	if (endPoint) {
++	if (endPoint != NULL) {
+ 		delete endPoint;
+ 		endPoint = NULL;
+ 	}
+@@ -2672,9 +3181,8 @@
+ 	close(_timerChangePipe[0]);
+ 	close(_timerChangePipe[1]);
+ #endif
+-	if (logstream) {
++	if (logstream != NULL) {
+ 		PTrace::SetStream(NULL);
+-		delete logstream;
+ 		logstream = NULL;
+ 	}
+ }

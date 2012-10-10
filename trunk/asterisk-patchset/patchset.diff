@@ -1,6 +1,6 @@
 Index: channels/h323/Makefile.in
 ===================================================================
---- channels/h323/Makefile.in	(revision 374753)
+--- channels/h323/Makefile.in	(revision 374790)
 +++ channels/h323/Makefile.in	(working copy)
 @@ -4,46 +4,28 @@
  # Make file for OpenH323 support layer
@@ -75,7 +75,7 @@ Index: channels/h323/Makefile.in
 +include $(OPENH323DIR)/openh323u.mak
 Index: channels/h323/caps_h323.cxx
 ===================================================================
---- channels/h323/caps_h323.cxx	(revision 374753)
+--- channels/h323/caps_h323.cxx	(revision 374790)
 +++ channels/h323/caps_h323.cxx	(working copy)
 @@ -3,6 +3,7 @@
  #include <h245.h>
@@ -316,7 +316,7 @@ Index: channels/h323/caps_h323.cxx
 +}
 Index: channels/h323/ast_h323.cxx
 ===================================================================
---- channels/h323/ast_h323.cxx	(revision 374753)
+--- channels/h323/ast_h323.cxx	(revision 374790)
 +++ channels/h323/ast_h323.cxx	(working copy)
 @@ -104,27 +104,17 @@
   */
@@ -1277,9 +1277,29 @@ Index: channels/h323/ast_h323.cxx
  };
  
  int h323_clear_call(const char *call_token, int cause)
+@@ -2659,7 +3178,7 @@
+ #undef endl
+ void h323_end_process(void)
+ {
+-	if (endPoint) {
++	if (endPoint != NULL) {
+ 		delete endPoint;
+ 		endPoint = NULL;
+ 	}
+@@ -2667,9 +3186,8 @@
+ 	close(_timerChangePipe[0]);
+ 	close(_timerChangePipe[1]);
+ #endif
+-	if (logstream) {
++	if (logstream != NULL) {
+ 		PTrace::SetStream(NULL);
+-		delete logstream;
+ 		logstream = NULL;
+ 	}
+ }
 Index: channels/h323/chan_h323.h
 ===================================================================
---- channels/h323/chan_h323.h	(revision 374753)
+--- channels/h323/chan_h323.h	(revision 374790)
 +++ channels/h323/chan_h323.h	(working copy)
 @@ -31,7 +31,18 @@
  
@@ -1369,7 +1389,7 @@ Index: channels/h323/chan_h323.h
  #endif
 Index: channels/h323/caps_h323.h
 ===================================================================
---- channels/h323/caps_h323.h	(revision 374753)
+--- channels/h323/caps_h323.h	(revision 374790)
 +++ channels/h323/caps_h323.h	(working copy)
 @@ -1,6 +1,8 @@
  #ifndef __AST_H323CAPS_H
@@ -1415,7 +1435,7 @@ Index: channels/h323/caps_h323.h
  #endif /* __AST_H323CAPS_H */
 Index: channels/h323/ast_h323.h
 ===================================================================
---- channels/h323/ast_h323.h	(revision 374753)
+--- channels/h323/ast_h323.h	(revision 374790)
 +++ channels/h323/ast_h323.h	(working copy)
 @@ -30,16 +30,19 @@
  #define AST_H323_H
@@ -1645,7 +1665,7 @@ Index: channels/Makefile.in
 +	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: channels/chan_h323.c
 ===================================================================
---- channels/chan_h323.c	(revision 374753)
+--- channels/chan_h323.c	(revision 374790)
 +++ channels/chan_h323.c	(working copy)
 @@ -29,16 +29,14 @@
   *
@@ -2503,7 +2523,7 @@ Index: channels/chan_h323.c
  		.reload = reload,
 Index: channels/Makefile
 ===================================================================
---- channels/Makefile	(revision 374753)
+--- channels/Makefile	(revision 374790)
 +++ channels/Makefile	(working copy)
 @@ -21,14 +21,14 @@
  endif
@@ -2567,7 +2587,7 @@ Index: channels/Makefile
  
 Index: configure.ac
 ===================================================================
---- configure.ac	(revision 374753)
+--- configure.ac	(revision 374790)
 +++ configure.ac	(working copy)
 @@ -2021,14 +2021,11 @@
  	if test -n "${PWLIB_DIR}"; then
@@ -2608,7 +2628,7 @@ Index: configure.ac
  if test -f build_tools/menuselect-deps; then
 Index: autoconf/ast_check_openh323.m4
 ===================================================================
---- autoconf/ast_check_openh323.m4	(revision 374753)
+--- autoconf/ast_check_openh323.m4	(revision 374790)
 +++ autoconf/ast_check_openh323.m4	(working copy)
 @@ -1,132 +1,49 @@
  AC_DEFUN([AST_CHECK_OPENH323], [
@@ -2781,7 +2801,7 @@ Index: autoconf/ast_check_openh323.m4
  ])
 Index: autoconf/ast_check_pwlib.m4
 ===================================================================
---- autoconf/ast_check_pwlib.m4	(revision 374753)
+--- autoconf/ast_check_pwlib.m4	(revision 374790)
 +++ autoconf/ast_check_pwlib.m4	(working copy)
 @@ -1,200 +1,68 @@
  AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
@@ -3121,7 +3141,7 @@ Index: autoconf/ast_check_pwlib.m4
  ])
 Index: include/asterisk/autoconfig.h.in
 ===================================================================
---- include/asterisk/autoconfig.h.in	(revision 374753)
+--- include/asterisk/autoconfig.h.in	(revision 374790)
 +++ include/asterisk/autoconfig.h.in	(working copy)
 @@ -1223,6 +1223,11 @@
  /* Define to 1 if running on Darwin. */
@@ -3137,7 +3157,7 @@ Index: include/asterisk/autoconfig.h.in
  
 Index: main/editline/np/fgetln.c
 ===================================================================
---- main/editline/np/fgetln.c	(revision 374753)
+--- main/editline/np/fgetln.c	(revision 374790)
 +++ main/editline/np/fgetln.c	(working copy)
 @@ -37,6 +37,7 @@
   */
@@ -3149,7 +3169,7 @@ Index: main/editline/np/fgetln.c
  #include <unistd.h>
 Index: main/editline/np/strlcpy.c
 ===================================================================
---- main/editline/np/strlcpy.c	(revision 374753)
+--- main/editline/np/strlcpy.c	(revision 374790)
 +++ main/editline/np/strlcpy.c	(working copy)
 @@ -28,6 +28,7 @@
   */
@@ -3161,7 +3181,7 @@ Index: main/editline/np/strlcpy.c
  static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
 Index: main/editline/np/strlcat.c
 ===================================================================
---- main/editline/np/strlcat.c	(revision 374753)
+--- main/editline/np/strlcat.c	(revision 374790)
 +++ main/editline/np/strlcat.c	(working copy)
 @@ -26,6 +26,7 @@
   */
@@ -3173,7 +3193,7 @@ Index: main/editline/np/strlcat.c
  #endif /* LIBC_SCCS and not lint */
 Index: res/pjproject/aconfigure.ac
 ===================================================================
---- res/pjproject/aconfigure.ac	(revision 374753)
+--- res/pjproject/aconfigure.ac	(revision 374790)
 +++ res/pjproject/aconfigure.ac	(working copy)
 @@ -44,9 +44,15 @@
  dnl #
