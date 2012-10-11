@@ -23,7 +23,7 @@ cd "${SRC_BASE}/gnugk"
 	${INSTALL_PREFIX} \
 	--enable-radius \
 	--enable-h46017 \
-	--enable-h46018 \
+	--disable-h46018 \
 	--enable-h46023 \
 	--disable-mysql \
 	--disable-pgsql \
