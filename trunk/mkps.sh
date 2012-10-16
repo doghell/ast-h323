@@ -29,6 +29,7 @@ for PACKAGE in ${PACKAGE_LIST}; do
 				done
 				echo -e "Creating patch set archive...\n"
 				tar cvjf ${PKG_PATCHSET} ${PKG_PATCH_LIST}
+				[ -d "${PACKAGE}-patchset" ] || mkdir -vp ${PACKAGE}-patchset
 				echo -e "\nInstalling new patch set...\n"
 				tar xvjf ${PKG_PATCHSET} -C ${PACKAGE}-patchset/ --strip-components 1
 			fi
