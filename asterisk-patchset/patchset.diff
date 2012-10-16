@@ -1,10 +1,6 @@
-Index: configure
-===================================================================
-Cannot display: file marked as a binary type.
-svn:mime-type = application/octet-stream
 Index: channels/h323/Makefile.in
 ===================================================================
---- channels/h323/Makefile.in	(revision 374790)
+--- channels/h323/Makefile.in	(revision 375050)
 +++ channels/h323/Makefile.in	(working copy)
 @@ -4,46 +4,28 @@
  # Make file for OpenH323 support layer
@@ -79,7 +75,7 @@ Index: channels/h323/Makefile.in
 +include $(OPENH323DIR)/openh323u.mak
 Index: channels/h323/caps_h323.cxx
 ===================================================================
---- channels/h323/caps_h323.cxx	(revision 374790)
+--- channels/h323/caps_h323.cxx	(revision 375050)
 +++ channels/h323/caps_h323.cxx	(working copy)
 @@ -3,6 +3,7 @@
  #include <h245.h>
@@ -320,7 +316,7 @@ Index: channels/h323/caps_h323.cxx
 +}
 Index: channels/h323/ast_h323.cxx
 ===================================================================
---- channels/h323/ast_h323.cxx	(revision 374790)
+--- channels/h323/ast_h323.cxx	(revision 375050)
 +++ channels/h323/ast_h323.cxx	(working copy)
 @@ -104,27 +104,17 @@
   */
@@ -1303,7 +1299,7 @@ Index: channels/h323/ast_h323.cxx
  }
 Index: channels/h323/chan_h323.h
 ===================================================================
---- channels/h323/chan_h323.h	(revision 374790)
+--- channels/h323/chan_h323.h	(revision 375050)
 +++ channels/h323/chan_h323.h	(working copy)
 @@ -31,7 +31,18 @@
  
@@ -1393,7 +1389,7 @@ Index: channels/h323/chan_h323.h
  #endif
 Index: channels/h323/caps_h323.h
 ===================================================================
---- channels/h323/caps_h323.h	(revision 374790)
+--- channels/h323/caps_h323.h	(revision 375050)
 +++ channels/h323/caps_h323.h	(working copy)
 @@ -1,6 +1,8 @@
  #ifndef __AST_H323CAPS_H
@@ -1439,7 +1435,7 @@ Index: channels/h323/caps_h323.h
  #endif /* __AST_H323CAPS_H */
 Index: channels/h323/ast_h323.h
 ===================================================================
---- channels/h323/ast_h323.h	(revision 374790)
+--- channels/h323/ast_h323.h	(revision 375050)
 +++ channels/h323/ast_h323.h	(working copy)
 @@ -30,16 +30,19 @@
  #define AST_H323_H
@@ -1669,9 +1665,9 @@ Index: channels/Makefile.in
 +	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: channels/chan_h323.c
 ===================================================================
---- channels/chan_h323.c	(revision 374790)
+--- channels/chan_h323.c	(revision 375050)
 +++ channels/chan_h323.c	(working copy)
-@@ -29,16 +29,14 @@
+@@ -29,7 +29,7 @@
   *
   * \par See also
   * \arg Config_h323
@@ -1680,6 +1676,7 @@ Index: channels/chan_h323.c
   *
   * \ingroup channel_drivers
   */
+@@ -44,9 +44,7 @@
  
  /*** MODULEINFO
  	<depend>openh323</depend>
@@ -1690,7 +1687,7 @@ Index: channels/chan_h323.c
   ***/
  
  #ifdef __cplusplus
-@@ -79,6 +77,7 @@
+@@ -87,6 +85,7 @@
  #include "asterisk/sched.h"
  #include "asterisk/io.h"
  #include "asterisk/rtp_engine.h"
@@ -1698,7 +1695,7 @@ Index: channels/chan_h323.c
  #include "asterisk/acl.h"
  #include "asterisk/callerid.h"
  #include "asterisk/cli.h"
-@@ -111,7 +110,6 @@
+@@ -119,7 +118,6 @@
  rfc2833_cb on_set_rfc2833_payload;
  hangup_cb on_hangup;
  setcapabilities_cb on_setcapabilities;
@@ -1706,7 +1703,7 @@ Index: channels/chan_h323.c
  onhold_cb on_hold;
  
  int h323debug; /*!< global debug flag */
-@@ -129,7 +127,7 @@
+@@ -137,7 +135,7 @@
  static struct ast_jb_conf global_jbconf;
  
  /** Variables required by Asterisk */
@@ -1715,7 +1712,7 @@ Index: channels/chan_h323.c
  static const char config[] = "h323.conf";
  static char default_context[AST_MAX_CONTEXT] = "default";
  static struct sockaddr_in bindaddr;
-@@ -176,6 +174,7 @@
+@@ -184,6 +182,7 @@
  	char rdnis[80];				/*!< Referring DNIS, if available */
  	int amaflags;				/*!< AMA Flags */
  	struct ast_rtp_instance *rtp;		/*!< RTP Session */
@@ -1723,7 +1720,7 @@ Index: channels/chan_h323.c
  	struct ast_dsp *vad;			/*!< Used for in-band DTMF detection */
  	int nativeformats;			/*!< Codec formats supported by a channel */
  	int needhangup;				/*!< Send hangup when Asterisk is ready */
-@@ -197,6 +196,7 @@
+@@ -205,6 +204,7 @@
  	int noInbandDtmf;			/*!< Inband DTMF processing by DSP isn't available */
  	int connection_established;		/*!< Call got CONNECT message */
  	int got_progress;			/*!< Call got PROGRESS message, pass inband audio */
@@ -1731,7 +1728,7 @@ Index: channels/chan_h323.c
  	struct oh323_pvt *next;			/*!< Next channel in list */
  } *iflist = NULL;
  
-@@ -253,6 +253,43 @@
+@@ -261,6 +261,43 @@
  static int oh323_indicate(struct ast_channel *c, int condition, const void *data, size_t datalen);
  static int oh323_fixup(struct ast_channel *oldchan, struct ast_channel *newchan);
  
@@ -1775,7 +1772,7 @@ Index: channels/chan_h323.c
  static struct ast_channel_tech oh323_tech = {
  	.type = "H323",
  	.description = tdesc,
-@@ -268,6 +305,7 @@
+@@ -276,6 +313,7 @@
  	.indicate = oh323_indicate,
  	.fixup = oh323_fixup,
  	.bridge = ast_rtp_instance_bridge,
@@ -1783,7 +1780,7 @@ Index: channels/chan_h323.c
  };
  
  static const char* redirectingreason2str(int redirectingreason)
-@@ -346,8 +384,8 @@
+@@ -354,8 +392,8 @@
  		if (h323debug)
  			ast_debug(1, "Preparing %s for new native format\n", ast_channel_name(c));
  		ast_format_cap_from_old_bitfield(ast_channel_nativeformats(c), pvt->nativeformats);
@@ -1794,7 +1791,7 @@ Index: channels/chan_h323.c
  	}
  	if (pvt->needhangup) {
  		if (h323debug)
-@@ -461,6 +499,11 @@
+@@ -469,6 +507,11 @@
  		ast_rtp_instance_destroy(pvt->rtp);
  	}
  
@@ -1806,7 +1803,7 @@ Index: channels/chan_h323.c
  	/* Free dsp used for in-band DTMF detection */
  	if (pvt->vad) {
  		ast_dsp_free(pvt->vad);
-@@ -590,7 +633,7 @@
+@@ -598,7 +641,7 @@
  static int oh323_call(struct ast_channel *c, const char *dest, int timeout)
  {
  	int res = 0;
@@ -1815,7 +1812,7 @@ Index: channels/chan_h323.c
  	const char *addr;
  	char called_addr[1024];
  
-@@ -787,8 +830,8 @@
+@@ -795,8 +838,8 @@
  
  				pvt->nativeformats = ast_format_to_old_bitfield(&f->subclass.format);
  
@@ -1826,7 +1823,7 @@ Index: channels/chan_h323.c
  				ast_channel_unlock(pvt->owner);
  			}
  			/* Do in-band DTMF detection */
-@@ -817,7 +860,7 @@
+@@ -825,7 +868,7 @@
  static struct ast_frame *oh323_read(struct ast_channel *c)
  {
  	struct ast_frame *fr;
@@ -1835,7 +1832,7 @@ Index: channels/chan_h323.c
  	ast_mutex_lock(&pvt->lock);
  	__oh323_update_info(c, pvt);
  	switch(ast_channel_fdno(c)) {
-@@ -830,6 +873,12 @@
+@@ -838,6 +881,12 @@
  		else
  			fr = &ast_null_frame;
  		break;
@@ -1848,7 +1845,7 @@ Index: channels/chan_h323.c
  	default:
  		ast_log(LOG_ERROR, "Unable to handle fd %d on channel %s\n", ast_channel_fdno(c), ast_channel_name(c));
  		fr = &ast_null_frame;
-@@ -846,6 +895,15 @@
+@@ -854,6 +903,15 @@
  	if (frame->frametype != AST_FRAME_VOICE) {
  		if (frame->frametype == AST_FRAME_IMAGE) {
  			return 0;
@@ -1864,7 +1861,7 @@ Index: channels/chan_h323.c
  		} else {
  			ast_log(LOG_WARNING, "Can't send %d type frames with H323 write\n", frame->frametype);
  			return 0;
-@@ -854,7 +912,7 @@
+@@ -862,7 +920,7 @@
  		if (!(ast_format_cap_iscompatible(ast_channel_nativeformats(c), &frame->subclass.format))) {
  			char tmp[256];
  			ast_log(LOG_WARNING, "Asked to transmit frame type '%s', while native formats is '%s' (read/write = %s/%s)\n",
@@ -1873,7 +1870,7 @@ Index: channels/chan_h323.c
  			return 0;
  		}
  	}
-@@ -868,6 +926,120 @@
+@@ -876,6 +934,120 @@
  	return res;
  }
  
@@ -1994,7 +1991,7 @@ Index: channels/chan_h323.c
  static int oh323_indicate(struct ast_channel *c, int condition, const void *data, size_t datalen)
  {
  
-@@ -876,6 +1048,9 @@
+@@ -884,6 +1056,9 @@
  	int res = -1;
  	int got_progress;
  
@@ -2004,7 +2001,7 @@ Index: channels/chan_h323.c
  	ast_mutex_lock(&pvt->lock);
  	token = (pvt->cd.call_token ? ast_strdup(pvt->cd.call_token) : NULL);
  	got_progress = pvt->got_progress;
-@@ -944,6 +1119,14 @@
+@@ -952,6 +1127,14 @@
  	case AST_CONTROL_PVT_CAUSE_CODE:
  	case -1:
  		break;
@@ -2019,7 +2016,7 @@ Index: channels/chan_h323.c
  	default:
  		ast_log(LOG_WARNING, "OH323: Don't know how to indicate condition %d on %s\n", condition, token);
  		break;
-@@ -981,7 +1164,7 @@
+@@ -989,7 +1172,7 @@
  
  	{
  		struct ast_sockaddr tmp;
@@ -2028,7 +2025,7 @@ Index: channels/chan_h323.c
  		ast_sockaddr_from_sin(&tmp, &bindaddr);
  		if (ast_find_ourip(&our_addr, &tmp, AF_INET)) {
  			ast_mutex_unlock(&pvt->lock);
-@@ -1025,6 +1208,43 @@
+@@ -1033,6 +1216,43 @@
  	return 0;
  }
  
@@ -2072,7 +2069,7 @@ Index: channels/chan_h323.c
  /*! \brief Private structure should be locked on a call */
  static struct ast_channel *__oh323_new(struct oh323_pvt *pvt, int state, const char *host, const char *linkedid)
  {
-@@ -1061,10 +1281,10 @@
+@@ -1069,10 +1289,10 @@
  
  		pvt->nativeformats = ast_format_cap_to_old_bitfield(ast_channel_nativeformats(ch));
  		ast_best_codec(ast_channel_nativeformats(ch), &tmpfmt);
@@ -2087,7 +2084,7 @@ Index: channels/chan_h323.c
  		if (!pvt->rtp)
  			__oh323_rtp_create(pvt);
  #if 0
-@@ -1077,11 +1297,15 @@
+@@ -1085,11 +1305,15 @@
  			ast_channel_set_fd(ch, 3, ast_rtp_instance_fd(pvt->vrtp, 1));
  		}
  #endif
@@ -2105,7 +2102,7 @@ Index: channels/chan_h323.c
  		if (state == AST_STATE_RING) {
  			ast_channel_rings_set(ch, 1);
  		}
-@@ -1157,7 +1381,13 @@
+@@ -1165,7 +1389,13 @@
  		}
  		if (!pvt->cd.call_token) {
  			ast_log(LOG_ERROR, "Not enough memory to alocate call token\n");
@@ -2120,7 +2117,7 @@ Index: channels/chan_h323.c
  			ast_free(pvt);
  			return NULL;
  		}
-@@ -1173,6 +1403,7 @@
+@@ -1181,6 +1411,7 @@
  	}
  	ast_copy_string(pvt->context, default_context, sizeof(pvt->context));
  	pvt->newstate = pvt->newcontrol = pvt->newdigit = pvt->update_rtp_info = pvt->DTMFsched = -1;
@@ -2128,7 +2125,7 @@ Index: channels/chan_h323.c
  	ast_mutex_init(&pvt->lock);
  	/* Add to interface list */
  	ast_mutex_lock(&iflock);
-@@ -1208,6 +1439,47 @@
+@@ -1216,6 +1447,47 @@
  	return NULL;
  }
  
@@ -2176,7 +2173,7 @@ Index: channels/chan_h323.c
  static int update_state(struct oh323_pvt *pvt, int state, int signal)
  {
  	if (!pvt)
-@@ -1368,14 +1640,26 @@
+@@ -1376,14 +1648,26 @@
  		options->silenceSuppression = ast_true(v->value);
  	} else if (!strcasecmp(v->name, "progress_setup")) {
  		tmp = atoi(v->value);
@@ -2205,7 +2202,7 @@ Index: channels/chan_h323.c
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d, assuming 0\n", v->value, v->name, v->lineno);
  			tmp = 0;
  		}
-@@ -1397,6 +1681,19 @@
+@@ -1405,6 +1689,19 @@
  			options->tunnelOptions |= H323_TUNNEL_QSIG;
  		else
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d\n", v->value, v->name, v->lineno);
@@ -2225,7 +2222,7 @@ Index: channels/chan_h323.c
  	} else if (!strcasecmp(v->name, "hold")) {
  		if (!strcasecmp(v->value, "none"))
  			options->holdHandling = ~0;
-@@ -1464,8 +1761,8 @@
+@@ -1472,8 +1769,8 @@
  				return NULL;
  			} else {
  				struct ast_sockaddr tmp;
@@ -2235,7 +2232,7 @@ Index: channels/chan_h323.c
  				if (ast_get_ip(&tmp, v->value)) {
  					ASTOBJ_UNREF(user, oh323_destroy_user);
  					return NULL;
-@@ -1584,8 +1881,8 @@
+@@ -1592,8 +1889,8 @@
  			}
  			{
  				struct ast_sockaddr tmp;
@@ -2245,7 +2242,7 @@ Index: channels/chan_h323.c
  				if (ast_get_ip(&tmp, v->value)) {
  					ast_log(LOG_ERROR, "Could not determine IP for %s\n", v->value);
  					ASTOBJ_UNREF(peer, oh323_destroy_peer);
-@@ -2079,11 +2376,11 @@
+@@ -2087,11 +2384,11 @@
  			if (!(ast_format_cap_identical(ast_channel_nativeformats(pvt->owner), pvt_native))) {
  				if (h323debug) {
  					char tmp[256], tmp2[256];
@@ -2260,7 +2257,7 @@ Index: channels/chan_h323.c
  			}
  			if (pvt->options.progress_audio)
  				ast_queue_control(pvt->owner, AST_CONTROL_PROGRESS);
-@@ -2119,6 +2416,129 @@
+@@ -2127,6 +2424,129 @@
  	return;
  }
  
@@ -2390,7 +2387,7 @@ Index: channels/chan_h323.c
  /*! \brief
    *	Call-back function to signal asterisk that the channel has been answered
    * Returns nothing
-@@ -2449,6 +2869,11 @@
+@@ -2457,6 +2877,11 @@
  		ast_rtp_instance_destroy(pvt->rtp);
  		pvt->rtp = NULL;
  	}
@@ -2402,7 +2399,7 @@ Index: channels/chan_h323.c
  	/* Free dsp used for in-band DTMF detection */
  	if (pvt->vad) {
  		ast_dsp_free(pvt->vad);
-@@ -2516,16 +2941,17 @@
+@@ -2524,16 +2949,17 @@
  		ast_debug(1, "DTMF payload on %s set to %d\n", token, payload);
  }
  
@@ -2423,7 +2420,7 @@ Index: channels/chan_h323.c
  	pvt->peercapability = capabilities;
  	pvt->jointcapability = pvt->options.capability & capabilities;
  	if (prefs) {
-@@ -2548,7 +2974,32 @@
+@@ -2556,7 +2982,32 @@
  			}
  		}
  	}
@@ -2456,7 +2453,7 @@ Index: channels/chan_h323.c
  }
  
  static void set_local_capabilities(unsigned call_reference, const char *token)
-@@ -2556,19 +3007,39 @@
+@@ -2564,19 +3015,39 @@
  	struct oh323_pvt *pvt;
  	int capability, dtmfmode, pref_codec;
  	struct ast_codec_pref prefs;
@@ -2498,7 +2495,7 @@ Index: channels/chan_h323.c
  
  	if (h323debug) {
  		int i;
-@@ -3033,6 +3504,7 @@
+@@ -3041,6 +3512,7 @@
  				ast_log(LOG_WARNING, "Invalid address: %s\n", v->value);
  			} else {
  				memcpy(&bindaddr.sin_addr, hp->h_addr, sizeof(bindaddr.sin_addr));
@@ -2506,7 +2503,7 @@ Index: channels/chan_h323.c
  			}
  		} else if (!strcasecmp(v->name, "tos")) {	/* Needs to be removed in next release */
  			ast_log(LOG_WARNING, "The \"tos\" setting is deprecated in this version of Asterisk. Please change to \"tos_audio\".\n");
-@@ -3220,7 +3692,7 @@
+@@ -3228,7 +3700,7 @@
  	struct oh323_pvt *pvt;
  	enum ast_rtp_glue_result res = AST_RTP_GLUE_RESULT_LOCAL;
  
@@ -2515,7 +2512,7 @@ Index: channels/chan_h323.c
  		return AST_RTP_GLUE_RESULT_FORBID;
  
  	ast_mutex_lock(&pvt->lock);
-@@ -3307,6 +3779,22 @@
+@@ -3315,6 +3787,22 @@
  	.update_peer = oh323_set_rtp_peer,
  };
  
@@ -2538,7 +2535,7 @@ Index: channels/chan_h323.c
  static enum ast_module_load_result load_module(void)
  {
  	int res;
-@@ -3366,6 +3854,8 @@
+@@ -3374,6 +3862,8 @@
  
  		ast_rtp_glue_register(&oh323_rtp_glue);
  
@@ -2547,7 +2544,7 @@ Index: channels/chan_h323.c
  		/* Register our callback functions */
  		h323_callback_register(setup_incoming_call,
  						setup_outgoing_call,
-@@ -3380,7 +3870,6 @@
+@@ -3388,7 +3878,6 @@
  						set_dtmf_payload,
  						hangup_connection,
  						set_local_capabilities,
@@ -2555,7 +2552,7 @@ Index: channels/chan_h323.c
  						remote_hold);
  		/* start the h.323 listener */
  		if (h323_start_listener(h323_signalling_port, bindaddr)) {
-@@ -3490,7 +3979,7 @@
+@@ -3498,7 +3987,7 @@
  	return 0;
  }
  
@@ -2566,7 +2563,7 @@ Index: channels/chan_h323.c
  		.reload = reload,
 Index: channels/Makefile
 ===================================================================
---- channels/Makefile	(revision 374790)
+--- channels/Makefile	(revision 375050)
 +++ channels/Makefile	(working copy)
 @@ -21,14 +21,14 @@
  endif
@@ -2630,9 +2627,9 @@ Index: channels/Makefile
  
 Index: configure.ac
 ===================================================================
---- configure.ac	(revision 374790)
+--- configure.ac	(revision 375050)
 +++ configure.ac	(working copy)
-@@ -2021,14 +2021,11 @@
+@@ -2022,14 +2022,11 @@
  	if test -n "${PWLIB_DIR}"; then
  		PWLIBDIR="${PWLIB_DIR}"
  	fi
@@ -2649,7 +2646,7 @@ Index: configure.ac
  		AST_CHECK_PWLIB_BUILD([PWLib], [PWLIB],
  			[Define if your system has the PWLib libraries.],
  			[#include "ptlib.h"],
-@@ -2041,9 +2038,8 @@
+@@ -2042,9 +2039,8 @@
  		OPENH323DIR="${OPENH323_DIR}"
  	fi
  	AST_CHECK_OPENH323()
@@ -2660,7 +2657,7 @@ Index: configure.ac
  	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
  		[Define if your system has the OpenH323 libraries.],
  		[#include "ptlib.h"
-@@ -2321,7 +2317,7 @@
+@@ -2322,7 +2318,7 @@
  	touch makeopts.acbak
  fi
  
@@ -2671,7 +2668,7 @@ Index: configure.ac
  if test -f build_tools/menuselect-deps; then
 Index: autoconf/ast_check_openh323.m4
 ===================================================================
---- autoconf/ast_check_openh323.m4	(revision 374790)
+--- autoconf/ast_check_openh323.m4	(revision 375050)
 +++ autoconf/ast_check_openh323.m4	(working copy)
 @@ -1,132 +1,49 @@
  AC_DEFUN([AST_CHECK_OPENH323], [
@@ -2844,7 +2841,7 @@ Index: autoconf/ast_check_openh323.m4
  ])
 Index: autoconf/ast_check_pwlib.m4
 ===================================================================
---- autoconf/ast_check_pwlib.m4	(revision 374790)
+--- autoconf/ast_check_pwlib.m4	(revision 375050)
 +++ autoconf/ast_check_pwlib.m4	(working copy)
 @@ -1,200 +1,68 @@
  AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
@@ -3184,7 +3181,7 @@ Index: autoconf/ast_check_pwlib.m4
  ])
 Index: include/asterisk/autoconfig.h.in
 ===================================================================
---- include/asterisk/autoconfig.h.in	(revision 374790)
+--- include/asterisk/autoconfig.h.in	(revision 375050)
 +++ include/asterisk/autoconfig.h.in	(working copy)
 @@ -1223,6 +1223,11 @@
  /* Define to 1 if running on Darwin. */
@@ -3200,7 +3197,7 @@ Index: include/asterisk/autoconfig.h.in
  
 Index: main/editline/np/fgetln.c
 ===================================================================
---- main/editline/np/fgetln.c	(revision 374790)
+--- main/editline/np/fgetln.c	(revision 375050)
 +++ main/editline/np/fgetln.c	(working copy)
 @@ -37,6 +37,7 @@
   */
@@ -3212,7 +3209,7 @@ Index: main/editline/np/fgetln.c
  #include <unistd.h>
 Index: main/editline/np/strlcpy.c
 ===================================================================
---- main/editline/np/strlcpy.c	(revision 374790)
+--- main/editline/np/strlcpy.c	(revision 375050)
 +++ main/editline/np/strlcpy.c	(working copy)
 @@ -28,6 +28,7 @@
   */
@@ -3224,7 +3221,7 @@ Index: main/editline/np/strlcpy.c
  static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
 Index: main/editline/np/strlcat.c
 ===================================================================
---- main/editline/np/strlcat.c	(revision 374790)
+--- main/editline/np/strlcat.c	(revision 375050)
 +++ main/editline/np/strlcat.c	(working copy)
 @@ -26,6 +26,7 @@
   */
@@ -3236,7 +3233,7 @@ Index: main/editline/np/strlcat.c
  #endif /* LIBC_SCCS and not lint */
 Index: res/pjproject/aconfigure.ac
 ===================================================================
---- res/pjproject/aconfigure.ac	(revision 374790)
+--- res/pjproject/aconfigure.ac	(revision 375050)
 +++ res/pjproject/aconfigure.ac	(working copy)
 @@ -44,9 +44,15 @@
  dnl #
