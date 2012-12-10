@@ -1,0 +1,613 @@
+Index: include/gnugknat.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/gnugknat.h,v
+retrieving revision 1.14
+diff -u -r1.14 gnugknat.h
+--- include/gnugknat.h	28 Oct 2011 01:02:10 -0000	1.14
++++ include/gnugknat.h	10 Dec 2012 10:37:22 -0000
+@@ -257,7 +257,7 @@
+ 	  )  { return RTPSupported; }
+   //@}
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     virtual PString GetServer() const { return PString(); }
+     virtual bool GetServerAddress(PIPSocketAddressAndPort & ) const { return false; }
+     virtual NatTypes GetNatType(bool) { return UnknownNat; }
+Index: include/h235auth.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/h235auth.h,v
+retrieving revision 1.22
+diff -u -r1.22 h235auth.h
+--- include/h235auth.h	10 Aug 2012 07:15:54 -0000	1.22
++++ include/h235auth.h	10 Dec 2012 10:37:23 -0000
+@@ -71,7 +71,7 @@
+     static H235Authenticator * CreateAuthenticator(const PString & authname,        ///< Feature Name Expression
+                                                 PPluginManager * pluginMgr = NULL   ///< Plugin Manager
+                                                  );
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ 
+     struct Capability {
+         const char * m_identifier;
+@@ -338,7 +338,7 @@
+     virtual const char * GetName() const;
+ 
+     static PStringArray GetAuthenticatorNames();
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     static PBoolean GetAuthenticationCapabilities(Capabilities * ids);
+ #endif
+     virtual PBoolean IsMatch(const PString & identifier) const;
+@@ -374,7 +374,7 @@
+ ////////////////////////////////////////////////////
+ 
+ 
+-#if PTLIB_VER >= 2110 && defined(P_SSL)
++#if PTLIB_VER >= 21100 && defined(P_SSL)
+ /// PFactory Loader
+ typedef H235AuthSimpleMD5 H235_AuthenticatorMD5;
+ #ifndef _WIN32_WCE
+@@ -400,7 +400,7 @@
+     virtual const char * GetName() const;
+ 
+     static PStringArray GetAuthenticatorNames();
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     static PBoolean GetAuthenticationCapabilities(Capabilities * ids);
+ #endif
+ 
+@@ -426,7 +426,7 @@
+     ) const;
+ };
+ 
+-#if PTLIB_VER >= 2110 && defined(P_SSL)
++#if PTLIB_VER >= 21100 && defined(P_SSL)
+ // PFactory Loader
+ typedef H235AuthCAT H235_AuthenticatorCAT;
+ #ifndef _WIN32_WCE
+@@ -451,7 +451,7 @@
+     virtual const char * GetName() const;
+ 
+     static PStringArray GetAuthenticatorNames();
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     static PBoolean GetAuthenticationCapabilities(Capabilities * ids);
+ #endif
+     virtual PBoolean IsMatch(const PString & identifier) const;
+@@ -495,7 +495,7 @@
+ //////////////////////////////////////////////////////////////////////////////
+ 
+ typedef H2351_Authenticator H235_AuthenticatorStd1;
+-#if PTLIB_VER >= 2110 && defined(P_SSL)
++#if PTLIB_VER >= 21100 && defined(P_SSL)
+ #ifndef _WIN32_WCE
+  PPLUGIN_STATIC_LOAD(Std1,H235Authenticator);
+ #endif
+@@ -511,7 +511,7 @@
+     virtual bool  ValidateDeviceName(const PString & deviceName, int /*userData*/) const { 
+             return (deviceName == className::GetAuthenticatorNames()[0]);
+     } 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     virtual bool GetDeviceCapabilities(const PString & /*deviceName*/, void * capabilities) const {
+         return className::GetAuthenticationCapabilities((H235Authenticator::Capabilities *)capabilities);
+     }
+Index: include/mediafmt.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/mediafmt.h,v
+retrieving revision 1.15
+diff -u -r1.15 mediafmt.h
+--- include/mediafmt.h	2 Feb 2012 14:03:18 -0000	1.15
++++ include/mediafmt.h	10 Dec 2012 10:37:23 -0000
+@@ -138,7 +138,7 @@
+     H245GenericInfo m_H245Generic;
+ };
+ 
+-#if PTLIB_VER < 2110
++#if PTLIB_VER < 21100
+ #ifndef __USE_STL__
+ __inline istream & operator>>(istream & strm, bool& b)
+ {
+@@ -182,7 +182,7 @@
+       if (temp >= m_minimum && temp <= m_maximum)
+         m_value = temp;
+       else {
+-#if PTLIB_VER >= 2110 || defined(__USE_STL__)
++#if PTLIB_VER >= 21100 || defined(__USE_STL__)
+ 	   strm.setstate(ios::badbit);
+ #else
+ 	   strm.setf(ios::badbit , ios::badbit);
+Index: include/openh323buildopts.h.in
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/openh323buildopts.h.in,v
+retrieving revision 1.53
+diff -u -r1.53 openh323buildopts.h.in
+--- include/openh323buildopts.h.in	21 Sep 2012 03:53:21 -0000	1.53
++++ include/openh323buildopts.h.in	10 Dec 2012 10:37:23 -0000
+@@ -55,7 +55,7 @@
+ #define H323PLUS_VER ( OPENH323_MAJOR*1000 + OPENH323_MINOR*10 + OPENH323_BUILD )
+ 
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+   #define H323_STLDICTIONARY  1
+ #endif
+ 
+Index: include/ptlib_extras.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/ptlib_extras.h,v
+retrieving revision 1.27
+diff -u -r1.27 ptlib_extras.h
+--- include/ptlib_extras.h	26 Oct 2012 11:51:03 -0000	1.27
++++ include/ptlib_extras.h	10 Dec 2012 10:37:23 -0000
+@@ -707,7 +707,7 @@
+ #define H323List  PSTLList
+ #define H323LIST  PSTLLIST
+ 
+-#endif  // PTLIB_VER < 2110
++#endif  // PTLIB_VER < 21100
+ 
+ 
+ #ifdef H323_FRAMEBUFFER
+Index: include/h235/h2356.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/h235/h2356.h,v
+retrieving revision 1.26
+diff -u -r1.26 h2356.h
+--- include/h235/h2356.h	29 Aug 2012 10:42:51 -0000	1.26
++++ include/h235/h2356.h	10 Dec 2012 10:37:23 -0000
+@@ -83,7 +83,7 @@
+     virtual const char * GetName() const;
+ 
+     static PStringArray GetAuthenticatorNames();
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     static PBoolean GetAuthenticationCapabilities(Capabilities * ids);
+ #endif
+     static void InitialiseCache(int cipherlength = 128);
+@@ -161,7 +161,7 @@
+ /// PFactory Loader
+ 
+ typedef H2356_Authenticator H235_AuthenticatorStd6;
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ #ifndef _WIN32_WCE
+    PPLUGIN_STATIC_LOAD(Std6, H235Authenticator);
+ #endif
+Index: include/h460/h46018_h225.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/h460/h46018_h225.h,v
+retrieving revision 1.27
+diff -u -r1.27 h46018_h225.h
+--- include/h460/h46018_h225.h	20 Oct 2012 06:54:30 -0000	1.27
++++ include/h460/h46018_h225.h	10 Dec 2012 10:37:23 -0000
+@@ -371,7 +371,7 @@
+ 
+     //@}
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     virtual PString GetServer() const { return PString(); }
+     virtual bool GetServerAddress(PIPSocketAddressAndPort & ) const { return false; }
+     virtual NatTypes GetNatType(bool) { return UnknownNat; }
+Index: include/h460/h460_std17.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/h460/h460_std17.h,v
+retrieving revision 1.11
+diff -u -r1.11 h460_std17.h
+--- include/h460/h460_std17.h	22 May 2012 07:05:57 -0000	1.11
++++ include/h460/h460_std17.h	10 Dec 2012 10:37:23 -0000
+@@ -470,7 +470,7 @@
+ 	  )  { return RTPSupported; }
+   //@}
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     virtual PString GetServer() const { return PString(); }
+     virtual bool GetServerAddress(PIPSocketAddressAndPort & ) const { return false; }
+     virtual NatTypes GetNatType(bool) { return UnknownNat; }
+Index: include/h460/h460_std23.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/h460/h460_std23.h,v
+retrieving revision 1.16
+diff -u -r1.16 h460_std23.h
+--- include/h460/h460_std23.h	19 Aug 2012 01:37:48 -0000	1.16
++++ include/h460/h460_std23.h	10 Dec 2012 10:37:23 -0000
+@@ -93,7 +93,7 @@
+         // Set Port Information
+         void SetPortInformation(PortInfo & pairedPortInfo, WORD portPairBase, WORD portPairMax);
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     virtual PString GetServer() const { return PString(); }
+     virtual bool GetServerAddress(PIPSocketAddressAndPort & ) const { return false; }
+     virtual NatTypes GetNatType(bool force) { return PSTUNClient::GetNatType(force); }
+Index: include/h460/upnpcp.h
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/include/h460/upnpcp.h,v
+retrieving revision 1.5
+diff -u -r1.5 upnpcp.h
+--- include/h460/upnpcp.h	15 Feb 2012 17:40:14 -0000	1.5
++++ include/h460/upnpcp.h	10 Dec 2012 10:37:23 -0000
+@@ -153,7 +153,7 @@
+ 
+     H323EndPoint * GetEndPoint();
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     virtual PString GetServer() const { return PString(); }
+     virtual bool GetServerAddress(PIPSocketAddressAndPort & ) const { return false; }
+     virtual NatTypes GetNatType(bool) { return UnknownNat; }
+Index: samples/simple/main.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/samples/simple/main.cxx,v
+retrieving revision 1.22
+diff -u -r1.22 main.cxx
+--- samples/simple/main.cxx	13 Nov 2012 14:10:13 -0000	1.22
++++ samples/simple/main.cxx	10 Dec 2012 10:37:24 -0000
+@@ -347,7 +347,7 @@
+   if (devices.GetSize() == 0) {
+       cout << "No Video Grabber available Disabling Video Support!" << endl;
+       hasVideo = FALSE;
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+   } else {
+     PVideoInputDevice::Capabilities caps;
+     if (PVideoInputDevice::GetDeviceCapabilities(devices[0],inputDriverName,&caps)) {
+@@ -450,7 +450,7 @@
+       cout << "Available Security: " << endl;
+       for (PINDEX i = 0; i < security.GetSize(); i++) {
+           cout << security[i] << endl;
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+           H235Authenticator::Capabilities caps;
+           if (H235Authenticator::GetAuthenticatorCapabilities(security[i],&caps)) {
+              for (list<H235Authenticator::Capability>::iterator j = 
+@@ -491,7 +491,7 @@
+   if (listenPort.IsEmpty())
+     listenPort = "1720";
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+   if (iface.IsEmpty()) {
+       PIPSocket::InterfaceTable interfaceTable;
+       if (PIPSocket::GetInterfaceTable(interfaceTable)) {
+@@ -790,7 +790,7 @@
+   PVideoDevice * device = isEncoding ? (PVideoDevice *)PVideoInputDevice::CreateDeviceByName(deviceName)
+                                      : (PVideoDevice *)PVideoOutputDevice::CreateDeviceByName(deviceName);
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+   if (isEncoding) {
+       PVideoInputDevice::Capabilities videoCaps;
+       if (((PVideoInputDevice *)device)->GetDeviceCapabilities(deviceName,deviceDriver,&videoCaps))
+Index: src/codecs.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/codecs.cxx,v
+retrieving revision 1.20
+diff -u -r1.20 codecs.cxx
+--- src/codecs.cxx	9 Jul 2012 13:59:45 -0000	1.20
++++ src/codecs.cxx	10 Dec 2012 10:37:24 -0000
+@@ -774,7 +774,7 @@
+   PINDEX numBytes = samplesPerFrame*2;
+   PINDEX count;
+ 
+-#if 0 //PTLIB_VER >= 2110
++#if 0 //PTLIB_VER >= 21100
+     bool lastPacket = true;
+     if (rawDataChannel->SourceEncoded(lastPacket,length))
+         return rawDataChannel->Read(buffer, length);
+Index: src/h235auth.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/h235auth.cxx,v
+retrieving revision 1.26
+diff -u -r1.26 h235auth.cxx
+--- src/h235auth.cxx	10 Aug 2012 06:50:10 -0000	1.26
++++ src/h235auth.cxx	10 Dec 2012 10:37:24 -0000
+@@ -50,7 +50,7 @@
+ 
+ static const char H235AuthenticatorPluginBaseClass[] = "H235Authenticator";
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ 
+ template <> H235Authenticator * PDevicePluginFactory<H235Authenticator>::Worker::Create(const PDefaultPFactoryKey & type) const
+ {
+@@ -95,7 +95,7 @@
+   return (H235Authenticator *)pluginMgr->CreatePluginsDeviceByName(authname, H235AuthenticatorPluginBaseClass,0);
+ }
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ 
+ PBoolean H235Authenticator::GetAuthenticatorCapabilities(const PString & deviceName, H235Authenticator::Capabilities * caps, PPluginManager * pluginMgr)
+ {
+@@ -529,7 +529,7 @@
+   return true;
+ }
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ PBoolean H235Authenticators::CreateAuthenticators(const PASN_Array & clearTokens, const PASN_Array & cryptoTokens)
+ {
+     if (clearTokens.GetSize() == 0 && cryptoTokens.GetSize() == 0)
+@@ -732,7 +732,7 @@
+ }
+ ///////////////////////////////////////////////////////////////////////////////
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ #ifdef P_SSL
+ H235SECURITY(MD5);
+ #endif
+@@ -764,7 +764,7 @@
+     return PStringArray("MD5");
+ }
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ PBoolean H235AuthSimpleMD5::GetAuthenticationCapabilities(H235Authenticator::Capabilities * ids)
+ {
+       H235Authenticator::Capability cap;
+@@ -974,7 +974,7 @@
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ #ifdef P_SSL
+ H235SECURITY(CAT);
+ #endif
+@@ -1007,7 +1007,7 @@
+ }
+ 
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ PBoolean H235AuthCAT::GetAuthenticationCapabilities(H235Authenticator::Capabilities * ids)
+ {
+       H235Authenticator::Capability cap;
+@@ -1182,7 +1182,7 @@
+ }
+ 
+ // need to load into factory here otherwise doesn't load...
+-#if PTLIB_VER < 2110 && defined(P_SSL)
++#if PTLIB_VER < 21100 && defined(P_SSL)
+ static PFactory<H235Authenticator>::Worker<H2351_Authenticator> factoryH2351_Authenticator("H2351_Authenticator");
+ #endif
+ 
+Index: src/h235auth1.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/h235auth1.cxx,v
+retrieving revision 1.12
+diff -u -r1.12 h235auth1.cxx
+--- src/h235auth1.cxx	16 Apr 2012 14:01:28 -0000	1.12
++++ src/h235auth1.cxx	10 Dec 2012 10:37:24 -0000
+@@ -155,7 +155,7 @@
+ 
+ /////////////////////////////////////////////////////////////////////////////
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ H235SECURITY(Std1);
+ #endif
+ 
+@@ -187,7 +187,7 @@
+     return PStringArray("Std1");
+ }
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ PBoolean H2351_Authenticator::GetAuthenticationCapabilities(H235Authenticator::Capabilities * ids)
+ {
+       H235Authenticator::Capability cap;
+Index: src/h323ep.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/h323ep.cxx,v
+retrieving revision 1.101
+diff -u -r1.101 h323ep.cxx
+--- src/h323ep.cxx	20 Nov 2012 12:12:55 -0000	1.101
++++ src/h323ep.cxx	10 Dec 2012 10:37:24 -0000
+@@ -2918,7 +2918,7 @@
+   if (localAliasNames.GetSize() < 2)
+     return FALSE;
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+   localAliasNames.Remove(&name);
+ #else
+   localAliasNames.RemoveAt(pos);
+Index: src/h323pluginmgr.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/h323pluginmgr.cxx,v
+retrieving revision 1.69
+diff -u -r1.69 h323pluginmgr.cxx
+--- src/h323pluginmgr.cxx	29 Nov 2012 16:23:26 -0000	1.69
++++ src/h323pluginmgr.cxx	10 Dec 2012 10:37:24 -0000
+@@ -1734,7 +1734,7 @@
+     PVideoChannel *videoIn = (PVideoChannel *)rawDataChannel;
+ 
+ 
+-#if 0 //PTLIB_VER >= 2110
++#if 0 //PTLIB_VER >= 21100
+     if (videoIn->SourceEncoded(lastPacketSent,length)) {
+         int maxDataSize = 1518-14-4-8-20-16; // Max Ethernet packet (1518 bytes) minus 802.3/CRC, 802.3, IP, UDP headers
+         dst.SetMinSize(maxDataSize);
+Index: src/mediafmt.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/mediafmt.cxx,v
+retrieving revision 1.17
+diff -u -r1.17 mediafmt.cxx
+--- src/mediafmt.cxx	17 Feb 2012 01:09:16 -0000	1.17
++++ src/mediafmt.cxx	10 Dec 2012 10:37:25 -0000
+@@ -378,7 +378,7 @@
+ 
+   m_value = m_enumerations.GetSize();
+ 
+-#if PTLIB_VER >= 2110 || defined(__USE_STL__)
++#if PTLIB_VER >= 21100 || defined(__USE_STL__)
+    strm.setstate(ios::badbit);
+ #else
+    strm.setf(ios::badbit , ios::badbit);
+@@ -652,7 +652,7 @@
+       *this = *registeredFormat;
+   }
+   else {
+-#if PTLIB_VER < 2110
++#if PTLIB_VER < 21100
+     PWaitAndSignal m(OpalMediaFormatFactory::GetMutex());
+     OpalMediaFormatFactory::KeyMap_T & keyMap = OpalMediaFormatFactory::GetKeyMap();
+     OpalMediaFormatFactory::KeyMap_T::const_iterator r;
+@@ -703,7 +703,7 @@
+ 
+   OpalMediaFormat * match = NULL;
+   RTP_DataFrame::PayloadTypes nextUnused = RTP_DataFrame::DynamicBase;
+-#if PTLIB_VER < 2110
++#if PTLIB_VER < 21100
+   PWaitAndSignal m(OpalMediaFormatFactory::GetMutex());
+   OpalMediaFormatFactory::KeyMap_T & keyMap = OpalMediaFormatFactory::GetKeyMap();
+   OpalMediaFormatFactory::KeyMap_T::iterator r;
+@@ -773,7 +773,7 @@
+ void OpalMediaFormat::GetRegisteredMediaFormats(OpalMediaFormat::List & list)
+ {
+   list.DisallowDeleteObjects();
+-#if PTLIB_VER < 2110
++#if PTLIB_VER < 21100
+   PWaitAndSignal m(OpalMediaFormatFactory::GetMutex());
+   OpalMediaFormatFactory::KeyMap_T & keyMap = OpalMediaFormatFactory::GetKeyMap();
+   OpalMediaFormatFactory::KeyMap_T::const_iterator r;
+@@ -1015,7 +1015,7 @@
+ 
+ bool OpalMediaFormat::SetRegisteredMediaFormat(const OpalMediaFormat & mediaFormat)
+ {
+-#if PTLIB_VER < 2110
++#if PTLIB_VER < 21100
+   PWaitAndSignal mutex(OpalMediaFormatFactory::GetMutex());
+ #endif
+   OpalMediaFormat * registeredFormat = OpalMediaFormatFactory::CreateInstance(mediaFormat);
+@@ -1037,7 +1037,7 @@
+     const OpalMediaOption & option = fmt.GetOption(i);
+     traceStream << "         " << option.GetName() << " = " << option.AsString() << '\n';
+   }
+-#if PTLIB_VER < 2110
++#if PTLIB_VER < 21100
+   PTRACE(6,traceStream);
+ #else
+   PTRACE2(6,NULL,traceStream);
+Index: src/q931.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/q931.cxx,v
+retrieving revision 1.8
+diff -u -r1.8 q931.cxx
+--- src/q931.cxx	18 Aug 2012 08:30:15 -0000	1.8
++++ src/q931.cxx	10 Dec 2012 10:37:25 -0000
+@@ -990,7 +990,7 @@
+   PINDEX len = bytes.GetSize()-offset;
+ 
+   if (len > 0)
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     memcpy(number.GetPointerAndSetLength(len), ((const BYTE *)bytes)+offset, len);
+ #else
+     memcpy(number.GetPointer(len+1), ((const BYTE *)bytes)+offset, len);
+Index: src/rtp.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/rtp.cxx,v
+retrieving revision 1.39
+diff -u -r1.39 rtp.cxx
+--- src/rtp.cxx	20 Oct 2012 06:52:22 -0000	1.39
++++ src/rtp.cxx	10 Dec 2012 10:37:25 -0000
+@@ -1359,7 +1359,7 @@
+     return NULL;
+ 
+   PTRACE(3, "RTP\tFound existing session " << sessionID);
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+   return const_cast<RTP_Session *>(&sessions[sessionID]);
+ #else
+   return &sessions[sessionID];
+Index: src/transports.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/transports.cxx,v
+retrieving revision 1.17
+diff -u -r1.17 transports.cxx
+--- src/transports.cxx	17 May 2012 09:53:55 -0000	1.17
++++ src/transports.cxx	10 Dec 2012 10:37:25 -0000
+@@ -1565,7 +1565,7 @@
+ 
+   PTRACE(3, "H323UDP\tBinding to interface: " << binding << ':' << localPort);
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+   canGetInterface = binding.IsAny();
+ #else
+   canGetInterface = (binding.IsAny()) && udp->SetCaptureReceiveToAddress();
+@@ -1595,7 +1595,7 @@
+ #ifdef P_STUN
+   PSTUNClient * stun = endpoint.GetSTUN(remoteAddress);
+   if (stun != NULL) {
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     if (stun->CreateSocket(PNatMethod::eComponent_Unknown,socket)) {
+ #else
+     if (stun->CreateSocket(socket)) {
+@@ -1647,7 +1647,7 @@
+ 
+     PUDPSocket * socket = (PUDPSocket *)GetReadChannel();
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+     if (canGetInterface) {
+       WORD notused;
+       // TODO: verify that this actually does the same as the pre 2.11.x version
+@@ -1832,7 +1832,7 @@
+ 
+ #ifdef P_STUN
+       // Not explicitly multicast
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+       if (stun != NULL && stun->CreateSocket(PNatMethod::eComponent_Unknown,socket)) {
+ #else
+       if (stun != NULL && stun->CreateSocket(socket)) {
+Index: src/h235/h2356.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/h235/h2356.cxx,v
+retrieving revision 1.43
+diff -u -r1.43 h2356.cxx
+--- src/h235/h2356.cxx	30 Aug 2012 13:25:34 -0000	1.43
++++ src/h235/h2356.cxx	10 Dec 2012 10:37:25 -0000
+@@ -516,7 +516,7 @@
+ 
+ /////////////////////////////////////////////////////////////////////////////////////
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ H235SECURITY(Std6);
+ #else
+ static PFactory<H235Authenticator>::Worker<H2356_Authenticator> factoryH2356_Authenticator("H2356_Authenticator");
+@@ -550,7 +550,7 @@
+     return PStringArray("Std6");
+ }
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ PBoolean H2356_Authenticator::GetAuthenticationCapabilities(H235Authenticator::Capabilities * ids)
+ {
+     for (PINDEX i = 0; i < PARRAYSIZE(H235_Encryptions); ++i) {
+Index: src/h460/h4601.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/h460/h4601.cxx,v
+retrieving revision 1.34
+diff -u -r1.34 h4601.cxx
+--- src/h460/h4601.cxx	7 Feb 2012 16:05:20 -0000	1.34
++++ src/h460/h4601.cxx	10 Dec 2012 10:37:25 -0000
+@@ -863,7 +863,7 @@
+ 
+ static const char H460FeaturePluginBaseClass[] = "H460_Feature";
+ 
+-#if PTLIB_VER >= 2110
++#if PTLIB_VER >= 21100
+ template <> H460_Feature * PDevicePluginFactory<H460_Feature>::Worker::Create(const PDefaultPFactoryKey & type) const
+ #else
+ template <> H460_Feature * PDevicePluginFactory<H460_Feature>::Worker::Create(const PString & type) const
