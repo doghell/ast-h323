@@ -1,5 +1,5 @@
 --- asterisk/configure.ac.orig	2012-09-21 00:18:47.000000000 +0600
-+++ asterisk/configure.ac	2012-11-21 17:45:02.000000000 +0600
++++ asterisk/configure.ac	2012-12-10 22:04:11.000000000 +0600
 @@ -2021,14 +2021,11 @@
  	if test -n "${PWLIB_DIR}"; then
  		PWLIBDIR="${PWLIB_DIR}"
@@ -22,7 +22,7 @@
  	fi
  	AST_CHECK_OPENH323()
 -	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [17], [3], [], [1], [19], [0])
-+	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [22], [0], [], [1], [24], [1])
++	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [22], [0], [], [1], [24], [2])
  	AST_CHECK_OPENH323_BUILD()
 -	PLATFORM_OPENH323="h323_${PWLIB_PLATFORM}_${OPENH323_SUFFIX}"
  	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
