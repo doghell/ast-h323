@@ -12,6 +12,11 @@ fi
                         
 cd "${SRC_BASE}/ptlib"
 
+if [ ! -x configure ]; then
+	autoconf configure.ac > configure
+	chmod 755 configure
+fi
+
 ./configure \
 	${INSTALL_PREFIX}
 
