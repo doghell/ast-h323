@@ -4,7 +4,7 @@ RCS file: /cvsroot/h323plus/h323plus/include/openh323buildopts.h.in,v
 retrieving revision 1.53
 diff -u -r1.53 openh323buildopts.h.in
 --- include/openh323buildopts.h.in	21 Sep 2012 03:53:21 -0000	1.53
-+++ include/openh323buildopts.h.in	11 Dec 2012 15:18:48 -0000
++++ include/openh323buildopts.h.in	15 Dec 2012 15:09:36 -0000
 @@ -35,7 +35,7 @@
  #include <ptbuildopts.h>
  #include <ptlib/../../revision.h>
@@ -14,3 +14,35 @@ diff -u -r1.53 openh323buildopts.h.in
     #define PTLIB_VER ( PTLIB_MAJOR*100 + PTLIB_MINOR*10 + PTLIB_BUILD )
  #else
     #define PTLIB_VER ( PTLIB_MAJOR*1000 + PTLIB_MINOR*10 + PTLIB_BUILD )
+Index: src/h460/h46015.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/h460/h46015.cxx,v
+retrieving revision 1.1
+diff -u -r1.1 h46015.cxx
+--- src/h460/h46015.cxx	9 May 2011 07:52:49 -0000	1.1
++++ src/h460/h46015.cxx	15 Dec 2012 15:09:37 -0000
+@@ -5,7 +5,7 @@
+ //
+ 
+ #ifdef P_USE_PRAGMA
+-#pragma implementation "H46015.h"
++#pragma implementation "h46015.h"
+ #endif
+ 
+ #include <ptlib.h>
+Index: src/h460/h460pres.cxx
+===================================================================
+RCS file: /cvsroot/h323plus/h323plus/src/h460/h460pres.cxx,v
+retrieving revision 1.12
+diff -u -r1.12 h460pres.cxx
+--- src/h460/h460pres.cxx	21 Jun 2012 07:08:55 -0000	1.12
++++ src/h460/h460pres.cxx	15 Dec 2012 15:09:38 -0000
+@@ -5,7 +5,7 @@
+ //
+ 
+ #ifdef P_USE_PRAGMA
+-#pragma implementation "H460pres.h"
++#pragma implementation "h460pres.h"
+ #endif
+ 
+ #include <ptlib.h>
