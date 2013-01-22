@@ -1,11 +1,12 @@
 --- asterisk/channels/h323/ast_h323.h.orig	2009-03-18 01:47:31.000000000 +0500
-+++ asterisk/channels/h323/ast_h323.h	2012-09-20 16:49:28.000000000 +0600
-@@ -30,16 +30,19 @@
++++ asterisk/channels/h323/ast_h323.h	2013-01-22 12:14:13.000000000 +0600
+@@ -30,16 +30,20 @@
  #define AST_H323_H
  
  #include "ast_ptlib.h"
 +#include <t38proto.h>
 +#include <h323t38.h>
++#include <q931.h>
  
  #define VERSION(a,b,c) ((a)*10000+(b)*100+(c))
  
@@ -21,7 +22,7 @@
  	PBoolean ClearCall(const PString &, H323Connection::CallEndReason reason);
  	PBoolean ClearCall(const PString &);
  
-@@ -58,7 +61,19 @@
+@@ -58,7 +62,19 @@
  class MyH323Connection : public H323Connection
  {
  	PCLASSINFO(MyH323Connection, H323Connection);
@@ -42,7 +43,7 @@
  public:
  	MyH323Connection(MyH323EndPoint &, unsigned, unsigned);
  	~MyH323Connection();
-@@ -71,6 +86,7 @@
+@@ -71,6 +87,7 @@
  			const H323SignalPDU &,
  			H323SignalPDU &);
  	void OnReceivedReleaseComplete(const H323SignalPDU &);
@@ -50,7 +51,7 @@
  	PBoolean OnAlerting(const H323SignalPDU &, const PString &);
  	PBoolean OnSendReleaseComplete(H323SignalPDU &);
  	PBoolean OnReceivedSignalSetup(const H323SignalPDU &);
-@@ -85,7 +101,7 @@
+@@ -85,7 +102,7 @@
  	PBoolean MySendProgress();
  	void OnSendCapabilitySet(H245_TerminalCapabilitySet &);
  	void OnSetLocalCapabilities();
@@ -59,17 +60,33 @@
  	PBoolean OnReceivedCapabilitySet(const H323Capabilities &, const H245_MultiplexCapability *,
  			H245_TerminalCapabilitySetReject &);
  	void SetCause(int _cause) { cause = _cause; };
-@@ -101,7 +117,8 @@
+@@ -101,7 +118,11 @@
  	virtual void OnReceivedLocalCallHold(int linkedId);
  	virtual void OnReceivedLocalCallRetrieve(int linkedId);
  #endif
 -	void MyHoldCall(BOOL localHold);
 +	const H323Capability *GetPreferredAudioCapability() const;
 +	void MyHoldCall(PBoolean localHold);
++
++	static Q931::InformationTransferCapability Q931InformationTransferCapability(unsigned short);
++	static unsigned short AstTransferCapability(Q931::InformationTransferCapability);
  
  	PString sourceAliases;
  	PString destAliases;
-@@ -134,6 +151,7 @@
+@@ -111,7 +132,11 @@
+ 	int cid_ton;
+ 	PString rdnis;
+ 	int redirect_reason;
+-	int transfer_capability;
++
++	Q931::InformationTransferCapability transferCapability;
++	unsigned transferRate;
++	unsigned codingStandard;
++	unsigned userInfoLayer1;
+ 
+ 	WORD sessionId;
+ 	PBoolean bridging;
+@@ -134,6 +159,7 @@
  	PCLASSINFO(MyH323_ExternalRTPChannel, H323_ExternalRTPChannel);
  
  public:
@@ -77,7 +94,7 @@
  	MyH323_ExternalRTPChannel(
  			MyH323Connection & connection,
  			const H323Capability & capability,
-@@ -153,15 +171,30 @@
+@@ -153,15 +179,30 @@
  	PIPSocket::Address remoteIpAddr;
  	/* Additional functions in order to have chan_h323 compile with H323Plus */
  #if VERSION(OPENH323_MAJOR, OPENH323_MINOR, OPENH323_BUILD) > VERSION(1,19,4)
