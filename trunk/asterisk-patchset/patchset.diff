@@ -1,6 +1,6 @@
 Index: channels/h323/Makefile.in
 ===================================================================
---- channels/h323/Makefile.in	(revision 379823)
+--- channels/h323/Makefile.in	(revision 380769)
 +++ channels/h323/Makefile.in	(working copy)
 @@ -4,46 +4,28 @@
  # Make file for OpenH323 support layer
@@ -75,7 +75,7 @@ Index: channels/h323/Makefile.in
 +include $(OPENH323DIR)/openh323u.mak
 Index: channels/h323/caps_h323.cxx
 ===================================================================
---- channels/h323/caps_h323.cxx	(revision 379823)
+--- channels/h323/caps_h323.cxx	(revision 380769)
 +++ channels/h323/caps_h323.cxx	(working copy)
 @@ -3,6 +3,7 @@
  #include <h245.h>
@@ -316,7 +316,7 @@ Index: channels/h323/caps_h323.cxx
 +}
 Index: channels/h323/ast_h323.cxx
 ===================================================================
---- channels/h323/ast_h323.cxx	(revision 379823)
+--- channels/h323/ast_h323.cxx	(revision 380769)
 +++ channels/h323/ast_h323.cxx	(working copy)
 @@ -80,6 +80,7 @@
  #include "asterisk/logger.h"
@@ -1457,7 +1457,7 @@ Index: channels/h323/ast_h323.cxx
  }
 Index: channels/h323/chan_h323.h
 ===================================================================
---- channels/h323/chan_h323.h	(revision 379823)
+--- channels/h323/chan_h323.h	(revision 380769)
 +++ channels/h323/chan_h323.h	(working copy)
 @@ -31,7 +31,18 @@
  
@@ -1547,7 +1547,7 @@ Index: channels/h323/chan_h323.h
  #endif
 Index: channels/h323/caps_h323.h
 ===================================================================
---- channels/h323/caps_h323.h	(revision 379823)
+--- channels/h323/caps_h323.h	(revision 380769)
 +++ channels/h323/caps_h323.h	(working copy)
 @@ -1,6 +1,8 @@
  #ifndef __AST_H323CAPS_H
@@ -1593,7 +1593,7 @@ Index: channels/h323/caps_h323.h
  #endif /* __AST_H323CAPS_H */
 Index: channels/h323/ast_h323.h
 ===================================================================
---- channels/h323/ast_h323.h	(revision 379823)
+--- channels/h323/ast_h323.h	(revision 380769)
 +++ channels/h323/ast_h323.h	(working copy)
 @@ -30,16 +30,20 @@
  #define AST_H323_H
@@ -1842,7 +1842,7 @@ Index: channels/Makefile.in
 +	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: channels/chan_h323.c
 ===================================================================
---- channels/chan_h323.c	(revision 379823)
+--- channels/chan_h323.c	(revision 380769)
 +++ channels/chan_h323.c	(working copy)
 @@ -29,7 +29,7 @@
   *
@@ -2740,9 +2740,9 @@ Index: channels/chan_h323.c
  		.reload = reload,
 Index: channels/Makefile
 ===================================================================
---- channels/Makefile	(revision 379823)
+--- channels/Makefile	(revision 380769)
 +++ channels/Makefile	(working copy)
-@@ -1,114 +0,0 @@
+@@ -1,115 +0,0 @@
 -#
 -# Asterisk -- An open source telephony toolkit.
 -# 
@@ -2809,13 +2809,14 @@ Index: channels/Makefile
 -clean::
 -	$(MAKE) -C misdn clean
 -	rm -f sip/*.o sip/*.i
+-	rm -f iax2/*.o iax2/*.i
 -	rm -f h323/libchanh323.a h323/Makefile.ast h323/*.o h323/*.dep
 -
 -dist-clean::
 -	rm -f h323/Makefile
 -
--$(if $(filter chan_iax2,$(EMBEDDED_MODS)),modules.link,chan_iax2.so): iax2-parser.o iax2-provision.o
--iax2-parser.o iax2-provision.o: _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_iax2)
+-$(if $(filter chan_iax2,$(EMBEDDED_MODS)),modules.link,chan_iax2.so): $(subst .c,.o,$(wildcard iax2/*.c))
+-$(subst .c,.o,$(wildcard iax2/*.c)): _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_iax2)
 -$(if $(filter chan_sip,$(EMBEDDED_MODS)),modules.link,chan_sip.so): $(subst .c,.o,$(wildcard sip/*.c))
 -$(subst .c,.o,$(wildcard sip/*.c)): _ASTCFLAGS+=$(call MOD_ASTCFLAGS,chan_sip)
 -$(if $(filter chan_dahdi,$(EMBEDDED_MODS)),modules.link,chan_dahdi.so): sig_analog.o sig_pri.o sig_ss7.o
@@ -2859,7 +2860,7 @@ Index: channels/Makefile
 -	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: configure.ac
 ===================================================================
---- configure.ac	(revision 379823)
+--- configure.ac	(revision 380769)
 +++ configure.ac	(working copy)
 @@ -2047,14 +2047,11 @@
  	if test -n "${PWLIB_DIR}"; then
@@ -2900,7 +2901,7 @@ Index: configure.ac
  if test -f build_tools/menuselect-deps; then
 Index: autoconf/ast_check_openh323.m4
 ===================================================================
---- autoconf/ast_check_openh323.m4	(revision 379823)
+--- autoconf/ast_check_openh323.m4	(revision 380769)
 +++ autoconf/ast_check_openh323.m4	(working copy)
 @@ -1,132 +1,49 @@
  AC_DEFUN([AST_CHECK_OPENH323], [
@@ -3073,7 +3074,7 @@ Index: autoconf/ast_check_openh323.m4
  ])
 Index: autoconf/ast_check_pwlib.m4
 ===================================================================
---- autoconf/ast_check_pwlib.m4	(revision 379823)
+--- autoconf/ast_check_pwlib.m4	(revision 380769)
 +++ autoconf/ast_check_pwlib.m4	(working copy)
 @@ -1,200 +1,68 @@
  AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
@@ -3413,7 +3414,7 @@ Index: autoconf/ast_check_pwlib.m4
  ])
 Index: main/editline/np/fgetln.c
 ===================================================================
---- main/editline/np/fgetln.c	(revision 379823)
+--- main/editline/np/fgetln.c	(revision 380769)
 +++ main/editline/np/fgetln.c	(working copy)
 @@ -37,6 +37,7 @@
   */
@@ -3425,7 +3426,7 @@ Index: main/editline/np/fgetln.c
  #include <unistd.h>
 Index: main/editline/np/strlcpy.c
 ===================================================================
---- main/editline/np/strlcpy.c	(revision 379823)
+--- main/editline/np/strlcpy.c	(revision 380769)
 +++ main/editline/np/strlcpy.c	(working copy)
 @@ -28,6 +28,7 @@
   */
@@ -3437,7 +3438,7 @@ Index: main/editline/np/strlcpy.c
  static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
 Index: main/editline/np/strlcat.c
 ===================================================================
---- main/editline/np/strlcat.c	(revision 379823)
+--- main/editline/np/strlcat.c	(revision 380769)
 +++ main/editline/np/strlcat.c	(working copy)
 @@ -26,6 +26,7 @@
   */
@@ -3447,26 +3448,3 @@ Index: main/editline/np/strlcat.c
  #if defined(LIBC_SCCS) && !defined(lint)
  static char *rcsid = "$OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp $";
  #endif /* LIBC_SCCS and not lint */
-Index: res/pjproject/aconfigure.ac
-===================================================================
---- res/pjproject/aconfigure.ac	(revision 379823)
-+++ res/pjproject/aconfigure.ac	(working copy)
-@@ -43,9 +43,15 @@
- dnl #
- dnl # Setup CROSS_COMPILE variable
- dnl #
--if test -z "$CROSS_COMPILE"; then 
--    CROSS_COMPILE=`echo ${CC} | sed 's/gcc//'`
--fi
-+#
-+# Section commented out because it produces strange result under FreeBSD 7.2
-+#
-+#if test -z "$CROSS_COMPILE"; then 
-+#    CC_IS_GCC=`cc -v 2>&1 | grep "^gcc " | wc -l`
-+#    if test "${CC_IS_GCC}" == "0"; then
-+#        CROSS_COMPILE=${CC}
-+#    fi
-+#fi
- 
- if test "$AR" = ""; then AR="${CROSS_COMPILE}ar rv"; fi
- AC_SUBST(AR)
