@@ -21,8 +21,6 @@ K_DIR2=/usr/src/kernels/`uname -r`/include
 [ -d $K_DIR1 ] && export CXXFLAGS="${CXXFLAGS} -I$K_DIR1"
 [ -d $K_DIR2 ] && export CXXFLAGS="${CXXFLAGS} -I$K_DIR2"
 [ -n "${2}" ] && INSTALL_PREFIX="--prefix=${2}"
-# H460.19 is not supported on FreeBSD (I don't know why). At least on my test box with FreeBSD 7.2.
-[ "`uname`" == "FreeBSD" ] && H460_19M="--disable-h46019m"
 
 cd "${SRC_BASE}/h323plus"
 		
@@ -31,9 +29,9 @@ cd "${SRC_BASE}/h323plus"
 	--enable-h4609 \
 	--enable-h46017 \
 	--enable-h46018 \
-	${H460_19M} \
+	--enable-h46019m \
 	--enable-h46023 \
-	--disable-h460p \
+	--enable-h460p \
 	--disable-gnugk \
 	--enable-spandsp
 
