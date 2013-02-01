@@ -4,6 +4,8 @@ if [ ! -d asterisk-g72x_18 ]; then
 	wget --directory-prefix=asterisk-g72x_18 \
 		http://asterisk.hosting.lv/bin/codec_g723-ast18-gcc4-glibc-pentium4.so \
 		http://asterisk.hosting.lv/bin/codec_g723-ast18-gcc4-glibc-pentium4-sse3.so \
+		http://asterisk.hosting.lv/bin/codec_g723-ast18-gcc4-glibc-core2.so \
+		http://asterisk.hosting.lv/bin/codec_g723-ast18-gcc4-glibc-core2-sse4.so \
 		http://asterisk.hosting.lv/bin/codec_g723-ast18-gcc4-glibc-x86_64-pentium4.so \
 		http://asterisk.hosting.lv/bin/codec_g723-ast18-gcc4-glibc-x86_64-core2.so \
 		http://asterisk.hosting.lv/bin/codec_g723-ast18-gcc4-glibc-x86_64-core2-sse4.so \
@@ -13,6 +15,8 @@ if [ ! -d asterisk-g72x_18 ]; then
 		http://asterisk.hosting.lv/bin/codec_g723-ast18-gcc4-glibc-x86_64-opteron-sse3.so \
 		http://asterisk.hosting.lv/bin/codec_g729-ast18-gcc4-glibc-pentium4.so \
 		http://asterisk.hosting.lv/bin/codec_g729-ast18-gcc4-glibc-pentium4-sse3.so \
+		http://asterisk.hosting.lv/bin/codec_g729-ast18-gcc4-glibc-core2.so \
+		http://asterisk.hosting.lv/bin/codec_g729-ast18-gcc4-glibc-core2-sse4.so \
 		http://asterisk.hosting.lv/bin/codec_g729-ast18-gcc4-glibc-x86_64-pentium4.so \
 		http://asterisk.hosting.lv/bin/codec_g729-ast18-gcc4-glibc-x86_64-core2.so \
 		http://asterisk.hosting.lv/bin/codec_g729-ast18-gcc4-glibc-x86_64-core2-sse4.so \
