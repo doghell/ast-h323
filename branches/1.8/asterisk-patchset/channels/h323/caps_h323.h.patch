@@ -1,5 +1,5 @@
 --- asterisk/channels/h323/caps_h323.h.orig	2009-02-19 01:11:57.000000000 +0500
-+++ asterisk/channels/h323/caps_h323.h	2012-09-21 11:08:01.000000000 +0600
++++ asterisk/channels/h323/caps_h323.h	2013-02-11 16:52:55.000000000 +0600
 @@ -1,6 +1,8 @@
  #ifndef __AST_H323CAPS_H
  #define __AST_H323CAPS_H

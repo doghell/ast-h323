@@ -1,6 +1,6 @@
 Index: channels/h323/Makefile.in
 ===================================================================
---- channels/h323/Makefile.in	(revision 380769)
+--- channels/h323/Makefile.in	(revision 381155)
 +++ channels/h323/Makefile.in	(working copy)
 @@ -4,46 +4,28 @@
  # Make file for OpenH323 support layer
@@ -75,7 +75,7 @@ Index: channels/h323/Makefile.in
 +include $(OPENH323DIR)/openh323u.mak
 Index: channels/h323/caps_h323.cxx
 ===================================================================
---- channels/h323/caps_h323.cxx	(revision 380769)
+--- channels/h323/caps_h323.cxx	(revision 381155)
 +++ channels/h323/caps_h323.cxx	(working copy)
 @@ -3,6 +3,7 @@
  #include <h245.h>
@@ -316,7 +316,7 @@ Index: channels/h323/caps_h323.cxx
 +}
 Index: channels/h323/ast_h323.cxx
 ===================================================================
---- channels/h323/ast_h323.cxx	(revision 380769)
+--- channels/h323/ast_h323.cxx	(revision 381155)
 +++ channels/h323/ast_h323.cxx	(working copy)
 @@ -80,6 +80,7 @@
  #include "asterisk/logger.h"
@@ -1457,7 +1457,7 @@ Index: channels/h323/ast_h323.cxx
  }
 Index: channels/h323/chan_h323.h
 ===================================================================
---- channels/h323/chan_h323.h	(revision 380769)
+--- channels/h323/chan_h323.h	(revision 381155)
 +++ channels/h323/chan_h323.h	(working copy)
 @@ -31,7 +31,18 @@
  
@@ -1547,7 +1547,7 @@ Index: channels/h323/chan_h323.h
  #endif
 Index: channels/h323/caps_h323.h
 ===================================================================
---- channels/h323/caps_h323.h	(revision 380769)
+--- channels/h323/caps_h323.h	(revision 381155)
 +++ channels/h323/caps_h323.h	(working copy)
 @@ -1,6 +1,8 @@
  #ifndef __AST_H323CAPS_H
@@ -1593,7 +1593,7 @@ Index: channels/h323/caps_h323.h
  #endif /* __AST_H323CAPS_H */
 Index: channels/h323/ast_h323.h
 ===================================================================
---- channels/h323/ast_h323.h	(revision 380769)
+--- channels/h323/ast_h323.h	(revision 381155)
 +++ channels/h323/ast_h323.h	(working copy)
 @@ -30,16 +30,20 @@
  #define AST_H323_H
@@ -1842,7 +1842,7 @@ Index: channels/Makefile.in
 +	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: channels/chan_h323.c
 ===================================================================
---- channels/chan_h323.c	(revision 380769)
+--- channels/chan_h323.c	(revision 381155)
 +++ channels/chan_h323.c	(working copy)
 @@ -29,7 +29,7 @@
   *
@@ -2740,7 +2740,7 @@ Index: channels/chan_h323.c
  		.reload = reload,
 Index: channels/Makefile
 ===================================================================
---- channels/Makefile	(revision 380769)
+--- channels/Makefile	(revision 381155)
 +++ channels/Makefile	(working copy)
 @@ -1,115 +0,0 @@
 -#
@@ -2860,7 +2860,7 @@ Index: channels/Makefile
 -	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: configure.ac
 ===================================================================
---- configure.ac	(revision 380769)
+--- configure.ac	(revision 381155)
 +++ configure.ac	(working copy)
 @@ -2047,14 +2047,11 @@
  	if test -n "${PWLIB_DIR}"; then
@@ -2869,7 +2869,7 @@ Index: configure.ac
 +	AST_CHECK_PWLIB_PLATFORM()
  	AST_CHECK_PWLIB()
 -	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [1], [9], [2], [P[[WT]]LIB_VERSION])
-+	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [2], [8], [4], [P[[WT]]LIB_VERSION])
++	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [2], [8], [4], [PTLIB_VERSION])
  
  	if test "${HAS_PWLIB:-unset}" != "unset"; then
 -		AST_CHECK_PWLIB_PLATFORM()
@@ -2884,7 +2884,7 @@ Index: configure.ac
  	fi
  	AST_CHECK_OPENH323()
 -	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [17], [3], [], [1], [19], [0])
-+	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [22], [0], [], [1], [25], [1])
++	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [25], [0], [OPENH323_VERSION])
  	AST_CHECK_OPENH323_BUILD()
 -	PLATFORM_OPENH323="h323_${PWLIB_PLATFORM}_${OPENH323_SUFFIX}"
  	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
@@ -2901,7 +2901,7 @@ Index: configure.ac
  if test -f build_tools/menuselect-deps; then
 Index: autoconf/ast_check_openh323.m4
 ===================================================================
---- autoconf/ast_check_openh323.m4	(revision 380769)
+--- autoconf/ast_check_openh323.m4	(revision 381155)
 +++ autoconf/ast_check_openh323.m4	(working copy)
 @@ -1,132 +1,49 @@
  AC_DEFUN([AST_CHECK_OPENH323], [
@@ -3074,9 +3074,9 @@ Index: autoconf/ast_check_openh323.m4
  ])
 Index: autoconf/ast_check_pwlib.m4
 ===================================================================
---- autoconf/ast_check_pwlib.m4	(revision 380769)
+--- autoconf/ast_check_pwlib.m4	(revision 381155)
 +++ autoconf/ast_check_pwlib.m4	(working copy)
-@@ -1,200 +1,68 @@
+@@ -1,204 +1,68 @@
  AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
 -PWLIB_OSTYPE=
 -case "$host_os" in
@@ -3314,16 +3314,20 @@ Index: autoconf/ast_check_pwlib.m4
  ])
  
  AC_DEFUN([AST_CHECK_PWLIB_VERSION], [
- 	if test "x$7" != "x"; then
+-	if test "x$7" != "x"; then
 -	   	VNAME="$7"
-+	   	VNAME="$7 "
-        	else
+-       	else
 -	   	VNAME="$2_VERSION"
-+	   	VNAME="$2_VERSION "
- 	fi
+-	fi
++   	VNAME="$7 "
  
  	if test "${HAS_$2:-unset}" != "unset"; then
-@@ -227,47 +95,52 @@
+-		$2_VERSION=`grep "$VNAME \"" ${$2_INCDIR}/$3 | sed -e 's/[[[:space:]]]\{1,\}/ /g' | cut -f3 -d ' ' | sed -e 's/"//g'`
++		$2_VERSION=`grep "$VNAME" ${$2_INCDIR}/$3 | sed -e 's/[[[:space:]]]\{1,\}/ /g' | cut -f3 -d ' ' | sed -e 's/"//g'`
+ 		$2_MAJOR_VERSION=`echo ${$2_VERSION} | cut -f1 -d.`
+ 		$2_MINOR_VERSION=`echo ${$2_VERSION} | cut -f2 -d.`
+ 		$2_BUILD_NUMBER=`echo ${$2_VERSION} | cut -f3 -d.`
+@@ -227,47 +91,52 @@
  
  AC_DEFUN([AST_CHECK_PWLIB_BUILD], [
  	if test "${HAS_$2:-unset}" != "unset"; then
@@ -3414,7 +3418,7 @@ Index: autoconf/ast_check_pwlib.m4
  ])
 Index: main/editline/np/fgetln.c
 ===================================================================
---- main/editline/np/fgetln.c	(revision 380769)
+--- main/editline/np/fgetln.c	(revision 381155)
 +++ main/editline/np/fgetln.c	(working copy)
 @@ -37,6 +37,7 @@
   */
@@ -3426,7 +3430,7 @@ Index: main/editline/np/fgetln.c
  #include <unistd.h>
 Index: main/editline/np/strlcpy.c
 ===================================================================
---- main/editline/np/strlcpy.c	(revision 380769)
+--- main/editline/np/strlcpy.c	(revision 381155)
 +++ main/editline/np/strlcpy.c	(working copy)
 @@ -28,6 +28,7 @@
   */
@@ -3438,7 +3442,7 @@ Index: main/editline/np/strlcpy.c
  static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
 Index: main/editline/np/strlcat.c
 ===================================================================
---- main/editline/np/strlcat.c	(revision 380769)
+--- main/editline/np/strlcat.c	(revision 381155)
 +++ main/editline/np/strlcat.c	(working copy)
 @@ -26,6 +26,7 @@
   */

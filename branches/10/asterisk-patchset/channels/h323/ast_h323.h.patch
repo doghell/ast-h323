@@ -1,5 +1,5 @@
 --- asterisk/channels/h323/ast_h323.h.orig	2009-03-18 01:47:31.000000000 +0500
-+++ asterisk/channels/h323/ast_h323.h	2013-01-22 12:14:13.000000000 +0600
++++ asterisk/channels/h323/ast_h323.h	2013-02-11 16:57:52.000000000 +0600
 @@ -30,16 +30,20 @@
  #define AST_H323_H
  
