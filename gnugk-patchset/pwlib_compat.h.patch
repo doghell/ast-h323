@@ -1,0 +1,13 @@
+--- gnugk/pwlib_compat.h.orig	2010-01-19 17:00:21.000000000 +0500
++++ gnugk/pwlib_compat.h	2013-02-11 16:39:18.000000000 +0600
+@@ -134,9 +134,7 @@
+ 	#endif
+ #endif
+ 
+-#ifdef H323_H460P
+-	#define HAS_H460P	1  // Presence
+-#endif
++#undef HAS_H460P	// Presence
+ 
+ #if OPENH323_MAJOR == 1
+ 	#if OPENH323_MINOR >= 19
