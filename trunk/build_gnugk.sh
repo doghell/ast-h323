@@ -22,9 +22,9 @@ cd "${SRC_BASE}/gnugk"
 ./configure \
 	${INSTALL_PREFIX} \
 	--enable-radius \
-	--enable-h46017 \
+	--disable-h46017 \
 	--disable-h46018 \
-	--enable-h46023 \
+	--disable-h46023 \
 	--disable-mysql \
 	--disable-pgsql \
 	--disable-firebird \
