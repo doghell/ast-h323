@@ -1,5 +1,5 @@
 --- asterisk/channels/h323/caps_h323.cxx.orig	2009-02-19 01:11:57.000000000 +0500
-+++ asterisk/channels/h323/caps_h323.cxx	2012-10-03 18:22:46.000000000 +0600
++++ asterisk/channels/h323/caps_h323.cxx	2013-02-11 16:52:55.000000000 +0600
 @@ -3,6 +3,7 @@
  #include <h245.h>
  #include "ast_h323.h"
