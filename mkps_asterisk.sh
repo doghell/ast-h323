@@ -6,4 +6,6 @@ PACKAGE_LIST=$1
 
 cd "${SRC_BASE}/asterisk"
 echo -e "\nInstalling new patch set...\n"
+svn add channels/Makefile.in
+svn delete --force channels/Makefile
 svn diff > "${SRC_BASE}/asterisk-patchset/patchset.diff"
