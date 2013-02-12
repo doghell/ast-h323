@@ -7,6 +7,10 @@ PACKAGE_LIST=$1
 
 for PACKAGE in ${PACKAGE_LIST}; do
 	if [ -h "${PACKAGE}" ]; then
+		echo -e "\nExecuting pre-installation script for  '${PACKAGE}'...\n"
+		if [ -x "${SRC_BASE}/pre-install_${PACKAGE}.sh" ]; then
+			${SRC_BASE}/pre-install_${PACKAGE}.sh || exit 1
+		fi
 		echo -e "\nInstalling '${PACKAGE}'...\n"
 		if [ -x "${SRC_BASE}/install_${PACKAGE}.sh" ]; then
 			${SRC_BASE}/install_${PACKAGE}.sh || exit 1

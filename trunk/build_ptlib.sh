@@ -13,5 +13,6 @@ fi
 cd "${SRC_BASE}/ptlib"
 
 ./configure \
-	${INSTALL_PREFIX} && \
+	${INSTALL_PREFIX} \
+	--disable-plugins && \
 gmake ${BUILD_TYPE}
