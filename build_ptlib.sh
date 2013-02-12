@@ -14,5 +14,6 @@ cd "${SRC_BASE}/ptlib"
 
 ./configure \
 	${INSTALL_PREFIX} \
-	--disable-plugins && \
+	--disable-audio \
+	--disable-video && \
 gmake ${BUILD_TYPE}
