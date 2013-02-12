@@ -22,8 +22,14 @@ else
 	${SRC_BASE}/get-extended.sh || exit 1
 fi
 
+if [ -x "${SRC_BASE}/pre-build.sh" ]; then
+	${SRC_BASE}/pre-build.sh debug || exit 1
+fi
+
 ${SRC_BASE}/build-debug.sh || exit 1
+
 if [ -x "${SRC_BASE}/pre-install.sh" ]; then
 	${SRC_BASE}/pre-install.sh || exit 1
 fi
-${SRC_BASE}/install.sh || exit 1
+
+${SRC_BASE}/install.sh
