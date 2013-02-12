@@ -10,6 +10,10 @@ else
 	TOOLS=`cat ${SRC_BASE}/tools_extended`
 fi
 
+if [ -x "${SRC_BASE}/pre-build-tools.sh" ]; then
+	${SRC_BASE}/pre-build-tools.sh opt || exit 1
+fi
+
 for TOOL in ${TOOLS}; do
 	${SRC_BASE}/get.sh ${TOOL} || exit 1
 	${SRC_BASE}/build.sh ${TOOL} || exit 1
@@ -22,14 +26,14 @@ else
 	${SRC_BASE}/get-extended.sh || exit 1
 fi
 
-if [ -x "${SRC_BASE}/pre-build.sh" ]; then
-	${SRC_BASE}/pre-build.sh opt || exit 1
+if [ -x "${SRC_BASE}/pre-build-packages.sh" ]; then
+	${SRC_BASE}/pre-build-packages.sh opt || exit 1
 fi
 
 ${SRC_BASE}/build.sh || exit 1
 
-if [ -x "${SRC_BASE}/pre-install.sh" ]; then
-	${SRC_BASE}/pre-install.sh || exit 1
+if [ -x "${SRC_BASE}/pre-install-packages.sh" ]; then
+	${SRC_BASE}/pre-install-packages.sh || exit 1
 fi
 
 ${SRC_BASE}/install.sh
