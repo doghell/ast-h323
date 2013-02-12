@@ -7,6 +7,5 @@ SRC_BASE=`dirname $0`
 cd "${SRC_BASE}/sqlite"
 
 ./configure \
-        ${INSTALL_PREFIX}
-        
+        ${INSTALL_PREFIX} && \
 make

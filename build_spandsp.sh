@@ -12,6 +12,5 @@ fi
 cd "${SRC_BASE}/spandsp"
 
 ./configure \
-	${INSTALL_PREFIX}
-
+	${INSTALL_PREFIX} && \
 make

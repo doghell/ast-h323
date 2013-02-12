@@ -10,6 +10,6 @@ export PATH="${HOME}/bin:${PATH}"
 for PACKAGE in ${PACKAGE_LIST}; do
 	if [ -h "${PACKAGE}" -a -x "${SRC_BASE}/build_${PACKAGE}.sh" ]; then
 		echo -e "\nBuilding '${PACKAGE}'...\n"
-		${SRC_BASE}/build_${PACKAGE}.sh debug ${HOME}
+		${SRC_BASE}/build_${PACKAGE}.sh debug ${HOME} || exit 1
 	fi
 done
