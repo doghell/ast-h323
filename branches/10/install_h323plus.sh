@@ -8,7 +8,6 @@ ARC=`uname -m`
 
 cd "${SRC_BASE}/h323plus"
 
-gmake install || exit 1
 if [ "`uname`" == "Linux" ]; then
 	cp -vf --no-dereference lib/libh323_linux_${ARC}__d* ${HOME}/lib
 else
