@@ -51,6 +51,6 @@ case "${CPU_VENDOR}" in
 esac
 
 for CODEC in g723 g729 ; do
-	cp -vf "codec_${CODEC}-ast18-gcc4-glibc-${CPU_SUFFIX}.so" "${HOME}/lib/asterisk/modules/"
-	ln -svnf "codec_${CODEC}-ast18-gcc4-glibc-${CPU_SUFFIX}.so" "${HOME}/lib/asterisk/modules/codec_${CODEC}.so"
+	cp -vf "codec_${CODEC}-ast18-gcc4-glibc-${CPU_SUFFIX}.so" "${HOME}/lib/asterisk/modules/" || exit 1
+	ln -svnf "codec_${CODEC}-ast18-gcc4-glibc-${CPU_SUFFIX}.so" "${HOME}/lib/asterisk/modules/codec_${CODEC}.so" || exit 1
 done

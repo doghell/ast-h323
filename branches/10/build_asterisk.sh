@@ -19,7 +19,9 @@ export CFLAGS="${CPPFLAGS} -fexceptions"
 
 cd "${SRC_BASE}/asterisk"
 
-[ -f configure ] || ./bootstrap.sh
+if [ ! -f configure ]; then
+	./bootstrap.sh || exit 1
+fi
 
 [ -n "${2}" ] && INSTALL_PREFIX="--prefix=${2}"
 
@@ -27,6 +29,5 @@ cd "${SRC_BASE}/asterisk"
 	${INSTALL_PREFIX} \
 	--with-spandsp \
 	--with-pwlib=${PWLIBDIR} \
-	--with-h323=${OPENH323DIR}
-
+	--with-h323=${OPENH323DIR} && \
 gmake

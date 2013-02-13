@@ -4,7 +4,7 @@ if [ ! -d asterisk-1.8.20.1 ]; then
 		wget http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-1.8.20.1.tar.gz || exit 1
 	fi
 	tar xvzf asterisk-1.8.20.1.tar.gz || exit 1
-	rm -vf asterisk-1.8.20.1/configure
+	rm -vf asterisk-1.8.20.1/configure || exit 1
 fi
 if [ -d asterisk-1.8.20.1 ]; then
 	ln -svnf asterisk-1.8.20.1 asterisk

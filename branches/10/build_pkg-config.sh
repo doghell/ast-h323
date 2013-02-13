@@ -7,6 +7,5 @@ SRC_BASE=`dirname $0`
 cd "${SRC_BASE}/pkg-config"
 
 ./configure \
-        ${INSTALL_PREFIX}
-        
+        ${INSTALL_PREFIX} && \
 make
