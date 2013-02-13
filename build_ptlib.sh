@@ -13,6 +13,7 @@ fi
 cd "${SRC_BASE}/ptlib"
 
 ./configure \
-	${INSTALL_PREFIX}
-
+	${INSTALL_PREFIX} \
+	--disable-audio \
+	--disable-video && \
 gmake ${BUILD_TYPE}

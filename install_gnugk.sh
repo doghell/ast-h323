@@ -20,7 +20,5 @@ g++ -o version-mmsvc version-mmsvc.cxx && \
 export GNUGK_VERSION=`./version-mmsvc` && \
 rm -f version-mmsvc.cxx version-mmsvc
 GK_DIR=obj_linux_${ARC}
-cp -vfP "${GK_DIR}/gnugk" ${HOME}/bin/gnugk-${GNUGK_VERSION}-opt
-cp -vfP "${GK_DIR}_d/gnugk" ${HOME}/bin/gnugk-${GNUGK_VERSION}-debug
-ln -svnf gnugk-${GNUGK_VERSION}-opt ${HOME}/bin/gnugk
+cp -vfP "${GK_DIR}_d/gnugk" ${HOME}/bin/gnugk-${GNUGK_VERSION}-debug && \
 ln -svnf gnugk-${GNUGK_VERSION}-debug ${HOME}/bin/gnugk

@@ -30,6 +30,5 @@ cd "${SRC_BASE}/gnugk"
 	--disable-firebird \
 	--disable-unixodbc \
 	--disable-sqlite \
-	--with-large-fdset=8192
-
+	--with-large-fdset=8192 && \
 make ${BUILD_TYPE}
