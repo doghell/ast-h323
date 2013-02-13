@@ -14,6 +14,8 @@ cd "${SRC_BASE}/ptlib"
 
 ./configure \
 	${INSTALL_PREFIX} \
-	--disable-audio \
-	--disable-video && \
+	--disable-alsa \
+	--disable-oss \
+	--disable-v4l \
+	--disable-v4l2 && \
 gmake ${BUILD_TYPE}
