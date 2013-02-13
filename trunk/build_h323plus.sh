@@ -26,6 +26,7 @@ cd "${SRC_BASE}/h323plus"
 		
 ./configure \
         ${INSTALL_PREFIX} \
+        --disable-h224 \
 	--enable-h4609 \
 	--enable-h46017 \
 	--enable-h46018 \
