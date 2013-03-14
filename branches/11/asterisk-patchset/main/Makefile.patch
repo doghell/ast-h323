@@ -1,0 +1,14 @@
+--- asterisk/main/Makefile.orig	2012-09-14 02:04:51.000000000 +0600
++++ asterisk/main/Makefile	2013-03-14 19:13:21.000000000 +0600
+@@ -164,8 +164,9 @@
+ AST_EMBED_LIBS:=$(foreach dep,$(EMBED_LIBS),$(value $(dep)))
+ OBJS:=$(sort $(OBJS))
+ 
+-ifneq ($(wildcard ../channels/h323/Makefile.ast),)
+-  include ../channels/h323/Makefile.ast
++ifneq ($(wildcard ../channels/h323/Makefile.LD*),)
++  H323LDFLAGS=$(shell cat ../channels/h323/Makefile.LDFLAGS)
++  H323LDLIBS=$(shell cat ../channels/h323/Makefile.LDLIBS)
+ else
+   H323LDFLAGS=
+   H323LDLIBS=

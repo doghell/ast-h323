@@ -1,6 +1,6 @@
 --- asterisk/channels/Makefile.in.orig	2013-03-14 16:32:12.000000000 +0600
-+++ asterisk/channels/Makefile.in	2013-03-14 15:37:07.000000000 +0600
-@@ -0,0 +1,76 @@
++++ asterisk/channels/Makefile.in	2013-03-14 19:04:30.000000000 +0600
+@@ -0,0 +1,77 @@
 +#
 +# Asterisk -- A telephony toolkit for Linux.
 +# 
@@ -52,10 +52,11 @@
 +chan_h323.so: h323/libchanh323.a
 +chan_h323.so: H323CFLAGS = $(shell cat h323/Makefile.CFLAGS)
 +chan_h323.so: H323LDFLAGS = $(shell cat h323/Makefile.LDFLAGS)
++chan_h323.so: H323LIBS = $(shell cat h323/Makefile.LDLIBS)
 +chan_h323.so: chan_h323.o
 +	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
-+	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) -o $@ $< h323/libchanh323.a"
-+	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) -o $@ $< h323/libchanh323.a
++	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a"
++	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a
 +endif
 +
 +h323/libchanh323.a:
