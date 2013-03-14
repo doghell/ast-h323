@@ -6,7 +6,7 @@ Index: channels/h323/Makefile.in
 ===================================================================
 --- channels/h323/Makefile.in	(revision 382507)
 +++ channels/h323/Makefile.in	(working copy)
-@@ -4,50 +4,33 @@
+@@ -4,50 +4,35 @@
  # Make file for OpenH323 support layer
  #
  
@@ -47,12 +47,14 @@ Index: channels/h323/Makefile.in
  
 -notrace::
 -	$(MAKE) NOTRACE=1 opt
-+$(shell echo $(STDCCFLAGS) $(STDCXXFLAGS) $(CFLAGS) $(CXXFLAGS) >Makefile.CFLAGS)
-+$(shell echo $(LDFLAGS) $(LDLIBS) $(ENDLDFLAGS) $(ENDLDLIBS) >Makefile.LDFLAGS)
- 
+-
 -$(SOURCES)::	Makefile ../../Makefile
 -	touch $@
 -
++$(shell echo $(STDCCFLAGS) $(OPTCCFLAGS) $(CFLAGS) >Makefile.CFLAGS)
++$(shell echo $(CFLAGS) $(LDFLAGS) >Makefile.LDFLAGS)
++$(shell echo $(LDLIBS) $(ENDLDLIBS) $(ENDLDFLAGS) >Makefile.LDLIBS)
++                        
  libchanh323.a:	$(OBJS)
  	ar crv $@ $(OBJS)
  
@@ -72,6 +74,7 @@ Index: channels/h323/Makefile.in
  clean::
 +	rm -vf libchanh323.a
 +	rm -vf Makefile.*FLAGS
++	rm -vf Makefile.LDLIBS
 +
 +dist-clean::
 +	rm -vf Makefile
@@ -1731,7 +1734,7 @@ Index: channels/Makefile.in
 ===================================================================
 --- channels/Makefile.in	(revision 0)
 +++ channels/Makefile.in	(revision 0)
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,77 @@
 +#
 +# Asterisk -- A telephony toolkit for Linux.
 +# 
@@ -1783,10 +1786,11 @@ Index: channels/Makefile.in
 +chan_h323.so: h323/libchanh323.a
 +chan_h323.so: H323CFLAGS = $(shell cat h323/Makefile.CFLAGS)
 +chan_h323.so: H323LDFLAGS = $(shell cat h323/Makefile.LDFLAGS)
++chan_h323.so: H323LIBS = $(shell cat h323/Makefile.LDLIBS)
 +chan_h323.so: chan_h323.o
 +	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
-+	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) -o $@ $< h323/libchanh323.a"
-+	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) -o $@ $< h323/libchanh323.a
++	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a"
++	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a
 +endif
 +
 +h323/libchanh323.a:
@@ -2925,6 +2929,27 @@ Index: configure.ac
  AST_CHECK_MANDATORY
  
  if test -f build_tools/menuselect-deps; then
+Index: Makefile
+===================================================================
+--- Makefile	(revision 382507)
++++ Makefile	(working copy)
+@@ -900,13 +900,13 @@
+ 	fi
+ 
+ cmenuselect: menuselect/cmenuselect menuselect-tree menuselect.makeopts
+-	-@menuselect/cmenuselect menuselect.makeopts && (echo "menuselect changes saved!"; rm -f channels/h323/Makefile.ast main/asterisk) || echo "menuselect changes NOT saved!"
++	-@menuselect/cmenuselect menuselect.makeopts && (echo "menuselect changes saved!"; rm -f main/asterisk) || echo "menuselect changes NOT saved!"
+ 
+ gmenuselect: menuselect/gmenuselect menuselect-tree menuselect.makeopts
+-	-@menuselect/gmenuselect menuselect.makeopts && (echo "menuselect changes saved!"; rm -f channels/h323/Makefile.ast main/asterisk) || echo "menuselect changes NOT saved!"
++	-@menuselect/gmenuselect menuselect.makeopts && (echo "menuselect changes saved!"; rm -f main/asterisk) || echo "menuselect changes NOT saved!"
+ 
+ nmenuselect: menuselect/nmenuselect menuselect-tree menuselect.makeopts
+-	-@menuselect/nmenuselect menuselect.makeopts && (echo "menuselect changes saved!"; rm -f channels/h323/Makefile.ast main/asterisk) || echo "menuselect changes NOT saved!"
++	-@menuselect/nmenuselect menuselect.makeopts && (echo "menuselect changes saved!"; rm -f main/asterisk) || echo "menuselect changes NOT saved!"
+ 
+ # options for make in menuselect/
+ MAKE_MENUSELECT=CC="$(BUILD_CC)" CXX="" LD="" AR="" RANLIB="" \
 Index: autoconf/ast_check_openh323.m4
 ===================================================================
 --- autoconf/ast_check_openh323.m4	(revision 382507)
@@ -3203,6 +3228,22 @@ Index: include/asterisk/autoconfig.h.in
  /* Number of bits in a file offset, on hosts where this is settable. */
  #undef _FILE_OFFSET_BITS
  
+Index: main/Makefile
+===================================================================
+--- main/Makefile	(revision 382507)
++++ main/Makefile	(working copy)
+@@ -163,8 +163,9 @@
+ AST_EMBED_LIBS:=$(foreach dep,$(EMBED_LIBS),$(value $(dep)))
+ OBJS:=$(sort $(OBJS))
+ 
+-ifneq ($(wildcard ../channels/h323/Makefile.ast),)
+-  include ../channels/h323/Makefile.ast
++ifneq ($(wildcard ../channels/h323/Makefile.LD*),)
++  H323LDFLAGS=$(shell cat ../channels/h323/Makefile.LDFLAGS)
++  H323LDLIBS=$(shell cat ../channels/h323/Makefile.LDLIBS)
+ else
+   H323LDFLAGS=
+   H323LDLIBS=
 Index: main/editline/np/fgetln.c
 ===================================================================
 --- main/editline/np/fgetln.c	(revision 382507)
