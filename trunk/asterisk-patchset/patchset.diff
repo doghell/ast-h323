@@ -1,10 +1,6 @@
-Index: configure
-===================================================================
-Cannot display: file marked as a binary type.
-svn:mime-type = application/octet-stream
 Index: channels/h323/Makefile.in
 ===================================================================
---- channels/h323/Makefile.in	(revision 382507)
+--- channels/h323/Makefile.in	(revision 383058)
 +++ channels/h323/Makefile.in	(working copy)
 @@ -4,50 +4,35 @@
  # Make file for OpenH323 support layer
@@ -80,7 +76,7 @@ Index: channels/h323/Makefile.in
 +	rm -vf Makefile
 Index: channels/h323/caps_h323.cxx
 ===================================================================
---- channels/h323/caps_h323.cxx	(revision 382507)
+--- channels/h323/caps_h323.cxx	(revision 383058)
 +++ channels/h323/caps_h323.cxx	(working copy)
 @@ -3,6 +3,7 @@
  #include <h245.h>
@@ -321,7 +317,7 @@ Index: channels/h323/caps_h323.cxx
 +}
 Index: channels/h323/ast_h323.cxx
 ===================================================================
---- channels/h323/ast_h323.cxx	(revision 382507)
+--- channels/h323/ast_h323.cxx	(revision 383058)
 +++ channels/h323/ast_h323.cxx	(working copy)
 @@ -80,6 +80,7 @@
  #include "asterisk/logger.h"
@@ -1462,7 +1458,7 @@ Index: channels/h323/ast_h323.cxx
  }
 Index: channels/h323/chan_h323.h
 ===================================================================
---- channels/h323/chan_h323.h	(revision 382507)
+--- channels/h323/chan_h323.h	(revision 383058)
 +++ channels/h323/chan_h323.h	(working copy)
 @@ -31,7 +31,18 @@
  
@@ -1552,7 +1548,7 @@ Index: channels/h323/chan_h323.h
  #endif
 Index: channels/h323/caps_h323.h
 ===================================================================
---- channels/h323/caps_h323.h	(revision 382507)
+--- channels/h323/caps_h323.h	(revision 383058)
 +++ channels/h323/caps_h323.h	(working copy)
 @@ -1,6 +1,8 @@
  #ifndef __AST_H323CAPS_H
@@ -1598,7 +1594,7 @@ Index: channels/h323/caps_h323.h
  #endif /* __AST_H323CAPS_H */
 Index: channels/h323/ast_h323.h
 ===================================================================
---- channels/h323/ast_h323.h	(revision 382507)
+--- channels/h323/ast_h323.h	(revision 383058)
 +++ channels/h323/ast_h323.h	(working copy)
 @@ -30,16 +30,20 @@
  #define AST_H323_H
@@ -1786,7 +1782,7 @@ Index: channels/Makefile.in
 +chan_h323.so: h323/libchanh323.a
 +chan_h323.so: H323CFLAGS = $(shell cat h323/Makefile.CFLAGS)
 +chan_h323.so: H323LDFLAGS = $(shell cat h323/Makefile.LDFLAGS)
-+chan_h323.so: H323LIBS = $(shell cat h323/Makefile.LDLIBS)
++chan_h323.so: H323LDLIBS = $(shell cat h323/Makefile.LDLIBS)
 +chan_h323.so: chan_h323.o
 +	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
 +	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a"
@@ -1814,7 +1810,7 @@ Index: channels/Makefile.in
 +chan_usbradio.so: _ASTCFLAGS+=-DNDEBUG
 Index: channels/chan_h323.c
 ===================================================================
---- channels/chan_h323.c	(revision 382507)
+--- channels/chan_h323.c	(revision 383058)
 +++ channels/chan_h323.c	(working copy)
 @@ -29,7 +29,7 @@
   *
@@ -2712,7 +2708,7 @@ Index: channels/chan_h323.c
  		.reload = reload,
 Index: channels/Makefile
 ===================================================================
---- channels/Makefile	(revision 382507)
+--- channels/Makefile	(revision 383058)
 +++ channels/Makefile	(working copy)
 @@ -1,115 +0,0 @@
 -#
@@ -2832,7 +2828,7 @@ Index: channels/Makefile
 -	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: configure.ac
 ===================================================================
---- configure.ac	(revision 382507)
+--- configure.ac	(revision 383058)
 +++ configure.ac	(working copy)
 @@ -178,7 +178,7 @@
       OSARCH=cygwin
@@ -2852,7 +2848,7 @@ Index: configure.ac
  AST_EXT_LIB_SETUP([HOARD], [Hoard Memory Allocator], [hoard])
  AST_EXT_LIB_SETUP([ICAL], [iCal], [ical])
  AST_EXT_LIB_SETUP([ICONV], [Iconv], [iconv])
-@@ -453,7 +453,6 @@
+@@ -454,7 +454,6 @@
  AST_EXT_LIB_SETUP_OPTIONAL([PRI_SERVICE_MESSAGES], [ISDN service messages], [PRI], [pri])
  AST_EXT_LIB_SETUP_OPTIONAL([PRI_REVERSE_CHARGE], [ISDN reverse charge], [PRI], [pri])
  # ------------------------------------^
@@ -2860,7 +2856,7 @@ Index: configure.ac
  AST_EXT_LIB_SETUP([RADIUS], [Radius Client], [radius])
  AST_EXT_LIB_SETUP([RESAMPLE], [LIBRESAMPLE], [resample])
  AST_EXT_LIB_SETUP([SDL], [Sdl], [sdl])
-@@ -2043,42 +2042,15 @@
+@@ -2046,42 +2045,15 @@
  
  AST_EXT_LIB_CHECK([OPENR2], [openr2], [openr2_chan_new], [openr2.h])
  
@@ -2909,7 +2905,7 @@ Index: configure.ac
  AST_EXT_LIB_CHECK([LUA], [lua5.1], [luaL_newstate], [lua5.1/lua.h], [-lm])
  if test "x${PBX_LUA}" = "x1" ; then
  	if test x"${LUA_DIR}" = x; then
-@@ -2296,9 +2268,7 @@
+@@ -2299,9 +2271,7 @@
  if test "${cross_compiling}" = "no";
  then
    AC_CHECK_FILE(/sbin/launchd, AC_DEFINE([HAVE_SBIN_LAUNCHD], 1, [Define to 1 if your system has /sbin/launchd.]))
@@ -2920,7 +2916,7 @@ Index: configure.ac
  fi
  AC_SUBST(PBX_LAUNCHD)
  
-@@ -2349,7 +2319,7 @@
+@@ -2352,7 +2322,7 @@
  	touch makeopts.acbak
  fi
  
@@ -2931,7 +2927,7 @@ Index: configure.ac
  if test -f build_tools/menuselect-deps; then
 Index: Makefile
 ===================================================================
---- Makefile	(revision 382507)
+--- Makefile	(revision 383058)
 +++ Makefile	(working copy)
 @@ -900,13 +900,13 @@
  	fi
@@ -2952,7 +2948,7 @@ Index: Makefile
  MAKE_MENUSELECT=CC="$(BUILD_CC)" CXX="" LD="" AR="" RANLIB="" \
 Index: autoconf/ast_check_openh323.m4
 ===================================================================
---- autoconf/ast_check_openh323.m4	(revision 382507)
+--- autoconf/ast_check_openh323.m4	(revision 383058)
 +++ autoconf/ast_check_openh323.m4	(working copy)
 @@ -1,132 +1,26 @@
  AC_DEFUN([AST_CHECK_OPENH323], [
@@ -3106,82 +3102,9 @@ Index: autoconf/ast_check_openh323.m4
 +
 +	AC_LANG_POP([C++])
  ])
-Index: autoconf/ast_check_h323plus.m4
-===================================================================
---- autoconf/ast_check_h323plus.m4	(revision 0)
-+++ autoconf/ast_check_h323plus.m4	(revision 0)
-@@ -0,0 +1,68 @@
-+AC_DEFUN([AST_CHECK_H323PLUS], [
-+	HAS_OPENH323=
-+	PBX_OPENH323=
-+	AC_LANG_PUSH([C++])
-+	if test "${OPENH323DIR:-unset}" != "unset" ; then
-+		AC_CHECK_HEADER(${OPENH323DIR}/version.h, HAS_OPENH323=1, )
-+		AC_SUBST([H323_DIR],${OPENH323DIR})
-+	else
-+		if test "${H323PLUSDIR:-unset}" != "unset" ; then
-+			AC_CHECK_HEADER(${H323PLUS3DIR}/version.h, HAS_OPENH323=1, )
-+			AC_SUBST([H323_DIR],${H323PLUSDIR})
-+		else
-+			AC_MSG_RESULT([unavailable])
-+			AC_ERROR([You need to define OPENH323DIR or H323PLUSDIR evironment variable])
-+		fi
-+	fi
-+	AC_LANG_POP([C++])
-+	if test "${HAS_OPENH323:-unset}" != "unset" -a -f "${H323_DIR}/openh323u.mak" -a -d "${H323_DIR}/lib"; then
-+		AC_MSG_CHECKING([H323Plus installation])
-+		PWLIBDIR=`grep -P "P[[WT]]LIBDIR\s*=\s*" "${H323_DIR}/openh323u.mak" | sed 's/^[[^=]]*=\s*//'`
-+		if test -n "${PWLIBDIR}" ; then
-+			PWLIB_OSTYPE_MACHTYPE=`${PWLIBDIR}/make/ptlib-config --ostype --machtype`
-+			PWLIB_PLATFORM=`echo ${PWLIB_OSTYPE_MACHTYPE} | sed 's/ /_/g'`
-+		else
-+			AC_MSG_RESULT([unavailable])
-+			AC_ERROR([Unable to find PTLib (was searching in '${PWLIBDIR}')])
-+		fi
-+
-+		H323_LIB_SUFFIX=
-+		H323_LIB_EXT=so
-+		case "${OPENH323_DIR}" in
-+			debug*)
-+				H323_LIB_SUFFIX=_d
-+			;;
-+		esac
-+		case "${OPENH323_DIR}" in
-+			*noshared)
-+				H323_LIB_SUFFIX="${H323_LIB_SUFFIX}_s"
-+				H323_LIB_EXT=a
-+			;;
-+		esac
-+
-+		if test -n "${PWLIB_PLATFORM}" ; then
-+			H323_LIB_FILE="libh323_${PWLIB_PLATFORM}_${H323_LIB_SUFFIX}.${H323_LIB_EXT}"
-+			if test -f "${H323_DIR}/lib/${H323_LIB_FILE}" ; then
-+				AC_DEFINE([HAVE_OPENH323], 1, [$3])
-+				AC_SUBST([PWLIB_DIR],${PWLIBDIR})
-+				AC_SUBST([PBX_OPENH323],1)
-+			else
-+				AC_MSG_RESULT([unavailable])
-+				AC_ERROR([There is no H323Plus ${OPENH323_DIR} library file (${H323_LIB_FILE}) in ${H323_DIR}/lib])
-+				AC_DEFINE([HAVE_OPENH323], 0, [$3])
-+				unset H323_DIR
-+			fi
-+		else
-+			AC_MSG_RESULT([unavailable])
-+			AC_ERROR([Unable to determine PTLib platform type])
-+			AC_DEFINE([HAVE_OPENH323], 0, [$3])
-+			unset H323_DIR
-+		fi
-+		AC_MSG_RESULT([will use ${OPENH323_DIR} library for ${PWLIB_PLATFORM}])
-+	else
-+		AC_MSG_RESULT([unavailable])
-+		AC_ERROR([Unable to find H323Plus])
-+		AC_DEFINE([HAVE_OPENH323], 0, [$3])
-+		unset H323_DIR
-+	fi
-+])
 Index: autoconf/ast_check_gnu_make.m4
 ===================================================================
---- autoconf/ast_check_gnu_make.m4	(revision 382507)
+--- autoconf/ast_check_gnu_make.m4	(revision 383058)
 +++ autoconf/ast_check_gnu_make.m4	(working copy)
 @@ -16,5 +16,9 @@
     AC_MSG_ERROR( *** Please install GNU make.  It is required to build Asterisk!)
@@ -3195,7 +3118,7 @@ Index: autoconf/ast_check_gnu_make.m4
  ])
 Index: include/asterisk/autoconfig.h.in
 ===================================================================
---- include/asterisk/autoconfig.h.in	(revision 382507)
+--- include/asterisk/autoconfig.h.in	(revision 383058)
 +++ include/asterisk/autoconfig.h.in	(working copy)
 @@ -518,7 +518,7 @@
  /* Define to 1 if you have the OGG library. */
@@ -3206,7 +3129,7 @@ Index: include/asterisk/autoconfig.h.in
  #undef HAVE_OPENH323
  
  /* Define to 1 if you have the MFR2 library. */
-@@ -663,9 +663,6 @@
+@@ -666,9 +666,6 @@
  /* Define to 1 if you have the `putenv' function. */
  #undef HAVE_PUTENV
  
@@ -3216,7 +3139,7 @@ Index: include/asterisk/autoconfig.h.in
  /* Define to 1 if you have the Radius Client library. */
  #undef HAVE_RADIUS
  
-@@ -1226,6 +1223,11 @@
+@@ -1229,6 +1226,11 @@
  /* Define to 1 if running on Darwin. */
  #undef _DARWIN_UNLIMITED_SELECT
  
@@ -3230,7 +3153,7 @@ Index: include/asterisk/autoconfig.h.in
  
 Index: main/Makefile
 ===================================================================
---- main/Makefile	(revision 382507)
+--- main/Makefile	(revision 383058)
 +++ main/Makefile	(working copy)
 @@ -163,8 +163,9 @@
  AST_EMBED_LIBS:=$(foreach dep,$(EMBED_LIBS),$(value $(dep)))
@@ -3246,7 +3169,7 @@ Index: main/Makefile
    H323LDLIBS=
 Index: main/editline/np/fgetln.c
 ===================================================================
---- main/editline/np/fgetln.c	(revision 382507)
+--- main/editline/np/fgetln.c	(revision 383058)
 +++ main/editline/np/fgetln.c	(working copy)
 @@ -37,6 +37,7 @@
   */
@@ -3258,7 +3181,7 @@ Index: main/editline/np/fgetln.c
  #include <unistd.h>
 Index: main/editline/np/strlcpy.c
 ===================================================================
---- main/editline/np/strlcpy.c	(revision 382507)
+--- main/editline/np/strlcpy.c	(revision 383058)
 +++ main/editline/np/strlcpy.c	(working copy)
 @@ -28,6 +28,7 @@
   */
@@ -3270,7 +3193,7 @@ Index: main/editline/np/strlcpy.c
  static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
 Index: main/editline/np/strlcat.c
 ===================================================================
---- main/editline/np/strlcat.c	(revision 382507)
+--- main/editline/np/strlcat.c	(revision 383058)
 +++ main/editline/np/strlcat.c	(working copy)
 @@ -26,6 +26,7 @@
   */

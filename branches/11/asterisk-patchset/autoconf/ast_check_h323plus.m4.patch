@@ -1,5 +1,5 @@
---- asterisk/autoconf/ast_check_h323plus.m4.orig	2013-03-14 16:02:57.000000000 +0600
-+++ asterisk/autoconf/ast_check_h323plus.m4	2013-03-13 16:56:16.000000000 +0600
+--- asterisk/autoconf/ast_check_h323plus.m4.orig	2013-03-14 22:17:07.000000000 +0600
++++ asterisk/autoconf/ast_check_h323plus.m4	2013-03-14 22:17:07.000000000 +0600
 @@ -0,0 +1,68 @@
 +AC_DEFUN([AST_CHECK_H323PLUS], [
 +	HAS_OPENH323=

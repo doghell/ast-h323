@@ -1,5 +1,5 @@
 --- asterisk/main/editline/np/strlcat.c.orig	2006-08-21 08:11:39.000000000 +0600
-+++ asterisk/main/editline/np/strlcat.c	2013-03-14 15:55:59.000000000 +0600
++++ asterisk/main/editline/np/strlcat.c	2013-03-14 22:17:07.000000000 +0600
 @@ -26,6 +26,7 @@
   */
  

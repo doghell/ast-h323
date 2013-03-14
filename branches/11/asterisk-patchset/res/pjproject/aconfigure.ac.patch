@@ -1,5 +1,5 @@
 --- asterisk/res/pjproject/aconfigure.ac.orig	2013-01-10 02:43:00.000000000 +0600
-+++ asterisk/res/pjproject/aconfigure.ac	2013-03-14 15:55:59.000000000 +0600
++++ asterisk/res/pjproject/aconfigure.ac	2013-03-14 22:17:07.000000000 +0600
 @@ -43,9 +43,15 @@
  dnl #
  dnl # Setup CROSS_COMPILE variable

@@ -1,5 +1,5 @@
 --- asterisk/configure.ac.orig	2012-10-19 02:02:02.000000000 +0600
-+++ asterisk/configure.ac	2013-03-14 16:00:58.000000000 +0600
++++ asterisk/configure.ac	2013-03-14 22:17:07.000000000 +0600
 @@ -395,7 +395,7 @@
  AST_EXT_LIB_SETUP([ILBC], [System iLBC], [ilbc], [, use 'internal' iLBC otherwise])
  AST_EXT_LIB_SETUP([GTK2], [gtk2], [gtk2])
