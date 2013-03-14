@@ -1,8 +1,12 @@
+Index: configure
+===================================================================
+Cannot display: file marked as a binary type.
+svn:mime-type = application/octet-stream
 Index: channels/h323/Makefile.in
 ===================================================================
---- channels/h323/Makefile.in	(revision 381155)
+--- channels/h323/Makefile.in	(revision 382507)
 +++ channels/h323/Makefile.in	(working copy)
-@@ -4,46 +4,28 @@
+@@ -4,50 +4,33 @@
  # Make file for OpenH323 support layer
  #
  
@@ -10,12 +14,15 @@ Index: channels/h323/Makefile.in
 +.PHONY:		Makefile.ast
  
 -default::	@OPENH323_BUILD@
--
++ifndef PWLIBDIR
++PWLIBDIR	= @PWLIB_DIR@
++PTLIBDIR	= $(PWLIBDIR)
++endif
+ 
 -# Verify those options with main Makefile
 -STDCCFLAGS	= -DNDEBUG
-+STDCCFLAGS      := -DPTRACING
- STDCCFLAGS	+= -I../../include -include ../../include/asterisk/autoconfig.h
- STDCCFLAGS	+= -fPIC
+-STDCCFLAGS	+= -I../../include -include ../../include/asterisk/autoconfig.h
+-STDCCFLAGS	+= -fPIC
 -#OPTCCFLAGS	+=
 -CFLAGS		= -pipe
 -TARGET		= libchanh323.a
@@ -23,35 +30,32 @@ Index: channels/h323/Makefile.in
 -SOURCES		= ast_h323.cxx compat_h323.cxx cisco-h225.cxx caps_h323.cxx
 -OBJDIR		= .
 -OBJS		=
-+CFLAGS		= -pipe -fexceptions
-+SOURCES		:= ast_h323.cxx compat_h323.cxx cisco-h225.cxx caps_h323.cxx
-+OBJDIR		:= obj_linux_x86@OPENH323_SUFFIX@
-+OBJS		:= ast_h323.o compat_h323.o cisco-h225.o caps_h323.o
-+BUILD_TYPE	:= @OPENH323_BUILD@
-+ifeq ($(BUILD_TYPE),debug)
-+DEBUG		:= 1
-+endif
- 
+-
  ifndef OPENH323DIR
- OPENH323DIR=@OPENH323DIR@
+-OPENH323DIR=@OPENH323DIR@
++OPENH323DIR	= @H323_DIR@
  endif
  
 -ifneq ($(wildcard $(OPENH323DIR)/openh323u.mak),)
--include $(OPENH323DIR)/openh323u.mak
++STDCCFLAGS	+= -I../../include -include ../../include/asterisk/autoconfig.h
++CFLAGS		= -pipe -fexceptions
++SOURCES		:= ast_h323.cxx compat_h323.cxx cisco-h225.cxx caps_h323.cxx
++TARGET		:= libchanh323.a
++
+ include $(OPENH323DIR)/openh323u.mak
 -endif
-+libchanh323.a:	Makefile.ast $(addprefix $(OBJDIR)/,$(OBJS))
-+	gmake @OPENH323_BUILD@
-+	ar crv $@ $(OBJDIR)/*.o
  
 -notrace::
 -	$(MAKE) NOTRACE=1 opt
--
++$(shell echo $(STDCCFLAGS) $(STDCXXFLAGS) $(CFLAGS) $(CXXFLAGS) >Makefile.CFLAGS)
++$(shell echo $(LDFLAGS) $(LDLIBS) $(ENDLDFLAGS) $(ENDLDLIBS) >Makefile.LDFLAGS)
+ 
 -$(SOURCES)::	Makefile ../../Makefile
 -	touch $@
 -
--libchanh323.a:	$(OBJS)
--	ar crv $@ $(OBJS)
--
+ libchanh323.a:	$(OBJS)
+ 	ar crv $@ $(OBJS)
+ 
 -# 
 -# We have this file in svn, so this is commented out to ensure it doesn't try
 -# to run implicitly.  However, it's still here for reference.
@@ -59,23 +63,21 @@ Index: channels/h323/Makefile.in
 -#cisco-h225.cxx::	cisco-h225.asn
 -#	asnparser -m CISCO_H225 -c $<
 -
- Makefile.ast:
- 	@echo H323CFLAGS  = $(STDCCFLAGS) $(OPTCCFLAGS) $(CFLAGS) >$@.tmp
- 	@echo H323LDFLAGS = $(CFLAGS) $(LDFLAGS) >>$@.tmp
-@@ -51,3 +33,10 @@
- 	@if [ -r $@ ] && cmp -s $@ $@.tmp; then rm -f $@.tmp; else mv -f $@.tmp $@; fi
- 
+-Makefile.ast:
+-	@echo H323CFLAGS  = $(STDCCFLAGS) $(OPTCCFLAGS) $(CFLAGS) >$@.tmp
+-	@echo H323LDFLAGS = $(CFLAGS) $(LDFLAGS) >>$@.tmp
+-	@echo H323LDLIBS  = $(LDLIBS) $(ENDLDLIBS) $(ENDLDFLAGS) >>$@.tmp
+-	@if [ -r $@ ] && cmp -s $@ $@.tmp; then rm -f $@.tmp; else mv -f $@.tmp $@; fi
+-
  clean::
 +	rm -vf libchanh323.a
-+	rm -vf Makefile.ast
++	rm -vf Makefile.*FLAGS
 +
 +dist-clean::
 +	rm -vf Makefile
-+
-+include $(OPENH323DIR)/openh323u.mak
 Index: channels/h323/caps_h323.cxx
 ===================================================================
---- channels/h323/caps_h323.cxx	(revision 381155)
+--- channels/h323/caps_h323.cxx	(revision 382507)
 +++ channels/h323/caps_h323.cxx	(working copy)
 @@ -3,6 +3,7 @@
  #include <h245.h>
@@ -316,7 +318,7 @@ Index: channels/h323/caps_h323.cxx
 +}
 Index: channels/h323/ast_h323.cxx
 ===================================================================
---- channels/h323/ast_h323.cxx	(revision 381155)
+--- channels/h323/ast_h323.cxx	(revision 382507)
 +++ channels/h323/ast_h323.cxx	(working copy)
 @@ -80,6 +80,7 @@
  #include "asterisk/logger.h"
@@ -1457,7 +1459,7 @@ Index: channels/h323/ast_h323.cxx
  }
 Index: channels/h323/chan_h323.h
 ===================================================================
---- channels/h323/chan_h323.h	(revision 381155)
+--- channels/h323/chan_h323.h	(revision 382507)
 +++ channels/h323/chan_h323.h	(working copy)
 @@ -31,7 +31,18 @@
  
@@ -1547,7 +1549,7 @@ Index: channels/h323/chan_h323.h
  #endif
 Index: channels/h323/caps_h323.h
 ===================================================================
---- channels/h323/caps_h323.h	(revision 381155)
+--- channels/h323/caps_h323.h	(revision 382507)
 +++ channels/h323/caps_h323.h	(working copy)
 @@ -1,6 +1,8 @@
  #ifndef __AST_H323CAPS_H
@@ -1593,7 +1595,7 @@ Index: channels/h323/caps_h323.h
  #endif /* __AST_H323CAPS_H */
 Index: channels/h323/ast_h323.h
 ===================================================================
---- channels/h323/ast_h323.h	(revision 381155)
+--- channels/h323/ast_h323.h	(revision 382507)
 +++ channels/h323/ast_h323.h	(working copy)
 @@ -30,16 +30,20 @@
  #define AST_H323_H
@@ -1729,7 +1731,7 @@ Index: channels/Makefile.in
 ===================================================================
 --- channels/Makefile.in	(revision 0)
 +++ channels/Makefile.in	(revision 0)
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,76 @@
 +#
 +# Asterisk -- A telephony toolkit for Linux.
 +# 
@@ -1747,38 +1749,8 @@ Index: channels/Makefile.in
 +MENUSELECT_CATEGORY=CHANNELS
 +MENUSELECT_DESCRIPTION=Channel Drivers
 +
-+ifeq ($(OSARCH),OpenBSD)
-+  PTLIB=-lpt
-+  H323LIB=-lh323
-+endif
-+
-+ifeq ($(OSARCH),linux-gnu)
-+  PTLIB=-lpt@OPENH323_SUFFIX@
-+  H323LIB=-lh323_linux_x86_@OPENH323_SUFFIX@
-+  CHANH323LIB=-ldl
-+endif
-+
-+ifeq ($(OSARCH),FreeBSD)
-+  PTLIB=-lpt@OPENH323_SUFFIX@
-+  H323LIB=-lh323_FreeBSD_x86_@OPENH323_SUFFIX@
-+  CHANH323LIB=-pthread
-+endif
-+
-+ifeq ($(OSARCH),NetBSD)
-+  PTLIB=-lpt_NetBSD_x86_r
-+  H323LIB=-lh323_NetBSD_x86_r
-+endif
-+
 +ifeq ($(wildcard h323/libchanh323.a),)
 +  MODULE_EXCLUDE += chan_h323
-+endif
-+
-+ifndef OPENH323DIR
-+  OPENH323DIR=$(HOME)/openh323
-+endif
-+
-+ifndef PWLIBDIR
-+  PWLIBDIR=$(HOME)/pwlib
 +endif
 +
 +all: _all
@@ -1787,10 +1759,6 @@ Index: channels/Makefile.in
 +
 +ifneq ($(findstring $(OSARCH), mingw32 cygwin ),)
 +  LIBS+= -lres_monitor.so -lres_features.so
-+endif
-+
-+ifeq ($(wildcard h323/chan_h323.so),)
-+include h323/Makefile.ast
 +endif
 +
 +clean::
@@ -1812,11 +1780,17 @@ Index: channels/Makefile.in
 +ifneq ($(filter chan_h323,$(EMBEDDED_MODS)),)
 +modules.link: h323/libchanh323.a
 +else
-+chan_h323.so: chan_h323.o h323/libchanh323.a
++chan_h323.so: h323/libchanh323.a
++chan_h323.so: H323CFLAGS = $(shell cat h323/Makefile.CFLAGS)
++chan_h323.so: H323LDFLAGS = $(shell cat h323/Makefile.LDFLAGS)
++chan_h323.so: chan_h323.o
 +	$(ECHO_PREFIX) echo "   [LD] $^ -> $@"
-+	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a"
-+	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) $(H323LDLIBS) -o $@ $< h323/libchanh323.a
++	$(ECHO_PREFIX) echo "$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) -o $@ $< h323/libchanh323.a"
++	$(CMD_PREFIX) $(CXX) $(PTHREAD_CFLAGS) $(_ASTLDFLAGS) $(ASTLDFLAGS) $(SOLINK) $(H323CFLAGS) $(H323LDFLAGS) -o $@ $< h323/libchanh323.a
 +endif
++
++h323/libchanh323.a:
++	$(CMD_PREFIX) $(MAKE) -C h323 @OPENH323_BUILD@
 +
 +chan_misdn.o: _ASTCFLAGS+=-Imisdn
 +
@@ -1834,15 +1808,9 @@ Index: channels/Makefile.in
 +
 +chan_usbradio.so: LIBS+=-lusb -lasound
 +chan_usbradio.so: _ASTCFLAGS+=-DNDEBUG
-+
-+h323/Makefile.ast:
-+	$(CMD_PREFIX) $(MAKE) -C h323 Makefile.ast
-+
-+h323/libchanh323.a: h323/Makefile.ast
-+	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: channels/chan_h323.c
 ===================================================================
---- channels/chan_h323.c	(revision 381155)
+--- channels/chan_h323.c	(revision 382507)
 +++ channels/chan_h323.c	(working copy)
 @@ -29,7 +29,7 @@
   *
@@ -2740,7 +2708,7 @@ Index: channels/chan_h323.c
  		.reload = reload,
 Index: channels/Makefile
 ===================================================================
---- channels/Makefile	(revision 381155)
+--- channels/Makefile	(revision 382507)
 +++ channels/Makefile	(working copy)
 @@ -1,115 +0,0 @@
 -#
@@ -2860,37 +2828,95 @@ Index: channels/Makefile
 -	$(CMD_PREFIX) $(MAKE) -C h323 libchanh323.a
 Index: configure.ac
 ===================================================================
---- configure.ac	(revision 381155)
+--- configure.ac	(revision 382507)
 +++ configure.ac	(working copy)
-@@ -2047,14 +2047,11 @@
- 	if test -n "${PWLIB_DIR}"; then
- 		PWLIBDIR="${PWLIB_DIR}"
- 	fi
-+	AST_CHECK_PWLIB_PLATFORM()
- 	AST_CHECK_PWLIB()
--	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [1], [9], [2], [P[[WT]]LIB_VERSION])
-+	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [2], [8], [4], [PTLIB_VERSION])
+@@ -178,7 +178,7 @@
+      OSARCH=cygwin
+      PBX_WINARCH=1
+      ;;
+-     linux-gnueabi* |  linux-gnuspe)
++     linux-gnueabi*)
+      OSARCH=linux-gnu
+      ;;
+      kfreebsd*-gnu)
+@@ -396,7 +396,7 @@
+ AST_EXT_LIB_SETUP([ILBC], [System iLBC], [ilbc], [, use 'internal' iLBC otherwise])
+ AST_EXT_LIB_SETUP([GTK2], [gtk2], [gtk2])
+ AST_EXT_LIB_SETUP([GMIME], [GMime], [gmime])
+-AST_EXT_LIB_SETUP([OPENH323], [OpenH323], [h323])
++AST_EXT_LIB_SETUP([OPENH323], [OpenH323], [h323], [, use 'opt' | 'optnoshared' | 'debug' | 'debugnoshared'])
+ AST_EXT_LIB_SETUP([HOARD], [Hoard Memory Allocator], [hoard])
+ AST_EXT_LIB_SETUP([ICAL], [iCal], [ical])
+ AST_EXT_LIB_SETUP([ICONV], [Iconv], [iconv])
+@@ -453,7 +453,6 @@
+ AST_EXT_LIB_SETUP_OPTIONAL([PRI_SERVICE_MESSAGES], [ISDN service messages], [PRI], [pri])
+ AST_EXT_LIB_SETUP_OPTIONAL([PRI_REVERSE_CHARGE], [ISDN reverse charge], [PRI], [pri])
+ # ------------------------------------^
+-AST_EXT_LIB_SETUP([PWLIB], [PWlib], [pwlib])
+ AST_EXT_LIB_SETUP([RADIUS], [Radius Client], [radius])
+ AST_EXT_LIB_SETUP([RESAMPLE], [LIBRESAMPLE], [resample])
+ AST_EXT_LIB_SETUP([SDL], [Sdl], [sdl])
+@@ -2043,42 +2042,15 @@
  
- 	if test "${HAS_PWLIB:-unset}" != "unset"; then
+ AST_EXT_LIB_CHECK([OPENR2], [openr2], [openr2_chan_new], [openr2.h])
+ 
+-if test "${USE_PWLIB}" != "no"; then
+-	if test -n "${PWLIB_DIR}"; then
+-		PWLIBDIR="${PWLIB_DIR}"
++if test "${USE_OPENH323}" != "no" ; then
++	if test -z "${OPENH323_DIR}" ; then
++		OPENH323_DIR=opt
+ 	fi
+-	AST_CHECK_PWLIB()
+-	AST_CHECK_PWLIB_VERSION([PWLib], [PWLIB], [ptbuildopts.h], [1], [9], [2], [P[[WT]]LIB_VERSION])
+-
+-	if test "${HAS_PWLIB:-unset}" != "unset"; then
 -		AST_CHECK_PWLIB_PLATFORM()
 -
 -		PLATFORM_PWLIB="pt_${PWLIB_PLATFORM}_r"
 -
- 		AST_CHECK_PWLIB_BUILD([PWLib], [PWLIB],
- 			[Define if your system has the PWLib libraries.],
- 			[#include "ptlib.h"],
-@@ -2067,9 +2064,8 @@
- 		OPENH323DIR="${OPENH323_DIR}"
- 	fi
- 	AST_CHECK_OPENH323()
+-		AST_CHECK_PWLIB_BUILD([PWLib], [PWLIB],
+-			[Define if your system has the PWLib libraries.],
+-			[#include "ptlib.h"],
+-			[int q = (int) PTime::IsDaylightSavings();])
+-	fi
++	AST_CHECK_H323PLUS()
++	OPENH323_BUILD="${OPENH323_DIR}"
++	AC_SUBST([OPENH323_BUILD])
+ fi
+ 
+-if test "${PBX_PWLIB}" = "1" -a "${USE_OPENH323}" != "no" ; then
+-	if test -n "${OPENH323_DIR}"; then
+-		OPENH323DIR="${OPENH323_DIR}"
+-	fi
+-	AST_CHECK_OPENH323()
 -	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [17], [3], [], [1], [19], [0])
-+	AST_CHECK_PWLIB_VERSION([OpenH323], [OPENH323], [openh323buildopts.h], [1], [25], [0], [OPENH323_VERSION])
- 	AST_CHECK_OPENH323_BUILD()
+-	AST_CHECK_OPENH323_BUILD()
 -	PLATFORM_OPENH323="h323_${PWLIB_PLATFORM}_${OPENH323_SUFFIX}"
- 	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
- 		[Define if your system has the OpenH323 libraries.],
- 		[#include "ptlib.h"
-@@ -2347,7 +2343,7 @@
+-	AST_CHECK_PWLIB_BUILD([OpenH323], [OPENH323],
+-		[Define if your system has the OpenH323 libraries.],
+-		[#include "ptlib.h"
+-		#include "h323.h"
+-		#include "h323ep.h"],
+-		[H323EndPoint ep = H323EndPoint();],
+-		[${PWLIB_INCLUDE}], [${PWLIB_LIB}])
+-fi
+-
+ AST_EXT_LIB_CHECK([LUA], [lua5.1], [luaL_newstate], [lua5.1/lua.h], [-lm])
+ if test "x${PBX_LUA}" = "x1" ; then
+ 	if test x"${LUA_DIR}" = x; then
+@@ -2296,9 +2268,7 @@
+ if test "${cross_compiling}" = "no";
+ then
+   AC_CHECK_FILE(/sbin/launchd, AC_DEFINE([HAVE_SBIN_LAUNCHD], 1, [Define to 1 if your system has /sbin/launchd.]))
+-  if test "${HAVE_SBIN_LAUNCHD}" = 1; then
+-    PBX_LAUNCHD=1
+-  fi
++  PBX_LAUNCHD=1
+ fi
+ AC_SUBST(PBX_LAUNCHD)
+ 
+@@ -2349,7 +2319,7 @@
  	touch makeopts.acbak
  fi
  
@@ -2901,9 +2927,9 @@ Index: configure.ac
  if test -f build_tools/menuselect-deps; then
 Index: autoconf/ast_check_openh323.m4
 ===================================================================
---- autoconf/ast_check_openh323.m4	(revision 381155)
+--- autoconf/ast_check_openh323.m4	(revision 382507)
 +++ autoconf/ast_check_openh323.m4	(working copy)
-@@ -1,132 +1,49 @@
+@@ -1,132 +1,26 @@
  AC_DEFUN([AST_CHECK_OPENH323], [
 -OPENH323_INCDIR=
 -OPENH323_LIBDIR=
@@ -2981,24 +3007,11 @@ Index: autoconf/ast_check_openh323.m4
 -  AC_SUBST([OPENH323_LIBDIR])
 -fi
 -  AC_LANG_POP([C++])
-+	if test "${HAS_OPENH323:-unset}" != "unset" ; then
-+		if test "${OPENH323_INCDIR:-unset}" = "unset"; then
-+			OPENH323_INCDIR="${OPENH323DIR}/include"
-+		fi
-+		if test "${OPENH323_LIBDIR:-unset}" = "unset"; then
-+			OPENH323_LIBDIR="${OPENH323DIR}/lib"
-+		fi
-+		AC_SUBST([OPENH323DIR])
-+		AC_SUBST([OPENH323_INCDIR])
-+		AC_SUBST([OPENH323_LIBDIR])
-+	fi
-+
-+	AC_LANG_POP([C++])
- ])
- 
- AC_DEFUN([AST_CHECK_OPENH323_BUILD], [
- 	if test "${HAS_OPENH323:-unset}" != "unset"; then
- 		AC_MSG_CHECKING(OpenH323 build option)
+-])
+-
+-AC_DEFUN([AST_CHECK_OPENH323_BUILD], [
+-	if test "${HAS_OPENH323:-unset}" != "unset"; then
+-		AC_MSG_CHECKING(OpenH323 build option)
 -		OPENH323_SUFFIX=
 -		prefixes="h323_${PWLIB_PLATFORM}_ h323_ openh323"
 -		for pfx in $prefixes; do
@@ -3024,7 +3037,10 @@ Index: autoconf/ast_check_openh323.m4
 -		done
 -		if test "${libfile:-unset}" != "unset"; then
 -			OPENH323_SUFFIX=`eval "echo ${libfile} | sed -e 's/lib${OPENH323_PREFIX}\(@<:@^.@:>@*\)\..*/\1/'"`
--		fi
++	if test "${HAS_OPENH323:-unset}" != "unset" ; then
++		if test "${OPENH323_INCDIR:-unset}" = "unset"; then
++			OPENH323_INCDIR="${OPENH323DIR}/include"
+ 		fi
 -		case "${OPENH323_SUFFIX}" in
 -			n)
 -				OPENH323_BUILD="notrace";;
@@ -3050,375 +3066,146 @@ Index: autoconf/ast_check_openh323.m4
 -				;;
 -		esac
 -		AC_MSG_RESULT(${OPENH323_BUILD})
- 
+-
 -		AC_SUBST([OPENH323_SUFFIX])
-+                OPENH323_PREFIX="h323_${PWLIB_PLATFORM}_"
-+                OPENH323_SUFFIX=
-+		OPENH323_BUILD=
-+                files=`ls -l ${OPENH323_LIBDIR}/lib${OPENH323_PREFIX}_d.so* 2>/dev/null | wc -l 2>/dev/null`
-+                if test $files -gt 0 ; then
-+                        OPENH323_BUILD="debug"
-+                        OPENH323_SUFFIX="_d"
-+                else
-+                        files=`ls -l ${OPENH323_LIBDIR}/lib${OPENH323_PREFIX}.so* 2>/dev/null | wc -l 2>/dev/null`
-+                        if test $files -gt 0 ; then
-+                                OPENH323_BUILD="opt"
-+                        fi
-+                fi
-+                OPENH323_LIB="-L${OPENH323_LIBDIR} -l${OPENH323_PREFIX}${OPENH323_SUFFIX}"
-+
-+		AC_MSG_RESULT(${OPENH323_BUILD})
- 		AC_SUBST([OPENH323_BUILD])
-+		AC_SUBST([OPENH323_SUFFIX])
- 	fi
- ])
-Index: autoconf/ast_check_pwlib.m4
-===================================================================
---- autoconf/ast_check_pwlib.m4	(revision 381155)
-+++ autoconf/ast_check_pwlib.m4	(working copy)
-@@ -1,204 +1,68 @@
- AC_DEFUN([AST_CHECK_PWLIB_PLATFORM], [
--PWLIB_OSTYPE=
--case "$host_os" in
--  linux*)          PWLIB_OSTYPE=linux ;
-+	PWLIB_OSTYPE=
-+	case "$host_os" in
-+		linux*)
-+			PWLIB_OSTYPE=linux ;
-   		;;
--  freebsd* )       PWLIB_OSTYPE=FreeBSD ;
-+		freebsd*)
-+			PWLIB_OSTYPE=FreeBSD ;
-   		;;
--  openbsd* )       PWLIB_OSTYPE=OpenBSD ;
--				   ENDLDLIBS="-lossaudio" ;
-+		*)
-+			PWLIB_OSTYPE="$host_os" ;
-+			AC_MSG_WARN("OS $PWLIB_OSTYPE build is not supported - proceed with caution!") ;
- 		;;
--  netbsd* )        PWLIB_OSTYPE=NetBSD ;
--				   ENDLDLIBS="-lossaudio" ;
-+	esac
-+
-+	PWLIB_MACHTYPE=
-+	case "$host_cpu" in
-+		x86 | i686 | i586 | i486 | i386 )
-+			PWLIB_MACHTYPE=x86
- 		;;
--  solaris* | sunos* ) PWLIB_OSTYPE=solaris ;
-+
-+		x86_64)
-+			PWLIB_MACHTYPE=x86_64 ;
-+			P_64BIT=1 ;
-+			LIB64=1 ;
- 		;;
--  darwin* )	       PWLIB_OSTYPE=Darwin ;
-+		*)
-+			PWLIB_MACHTYPE="$host_cpu";
-+			AC_MSG_WARN("CPU $PWLIB_MACHTYPE build is not supported - proceed with caution!")
- 		;;
--  beos*)           PWLIB_OSTYPE=beos ;
--                   STDCCFLAGS="$STDCCFLAGS -D__BEOS__"
--		;;
--  cygwin*)         PWLIB_OSTYPE=cygwin ;
--		;;
--  mingw*)	       PWLIB_OSTYPE=mingw ;
--		           STDCCFLAGS="$STDCCFLAGS -mms-bitfields" ;
--		           ENDLDLIBS="-lwinmm -lwsock32 -lsnmpapi -lmpr -lcomdlg32 -lgdi32 -lavicap32" ;
--		;;
--  * )		       PWLIB_OSTYPE="$host_os" ;
--		           AC_MSG_WARN("OS $PWLIB_OSTYPE not recognized - proceed with caution!") ;
--		;;
--esac
-+	esac
- 
--PWLIB_MACHTYPE=
--case "$host_cpu" in
--   x86 | i686 | i586 | i486 | i386 ) PWLIB_MACHTYPE=x86
--                   ;;
-+	PWLIB_PLATFORM="${PWLIB_OSTYPE}_${PWLIB_MACHTYPE}"
- 
--   x86_64)	   PWLIB_MACHTYPE=x86_64 ;
--		   P_64BIT=1 ;
--                   LIB64=1 ;
--		   ;;
--
--   alpha | alphaev56 | alphaev6 | alphaev67 | alphaev7) PWLIB_MACHTYPE=alpha ;
--		   P_64BIT=1 ;
--		   ;;
--
--   sparc )         PWLIB_MACHTYPE=sparc ;
--		   ;;
--
--   powerpc )       PWLIB_MACHTYPE=ppc ;
--		   ;;
--
--   ppc )           PWLIB_MACHTYPE=ppc ;
--		   ;;
--
--   powerpc64 )     PWLIB_MACHTYPE=ppc64 ;
--		   P_64BIT=1 ;
--                   LIB64=1 ;
--		   ;;
--
--   ppc64 )         PWLIB_MACHTYPE=ppc64 ;
--		   P_64BIT=1 ;
--                   LIB64=1 ;
--		   ;;
--
--   ia64)	   PWLIB_MACHTYPE=ia64 ;
--		   P_64BIT=1 ;
--	  	   ;;
--
--   s390x)	   PWLIB_MACHTYPE=s390x ;
--		   P_64BIT=1 ;
--                   LIB64=1 ;
--		   ;;
--
--   s390)	   PWLIB_MACHTYPE=s390 ;
--		   ;;
--
--   * )		   PWLIB_MACHTYPE="$host_cpu";
--		   AC_MSG_WARN("CPU $PWLIB_MACHTYPE not recognized - proceed with caution!") ;;
--esac
--
--PWLIB_PLATFORM="${PWLIB_OSTYPE}_${PWLIB_MACHTYPE}"
--
--AC_SUBST([PWLIB_PLATFORM])
-+	AC_SUBST([PWLIB_PLATFORM])
- ])
- 
- AC_DEFUN([AST_CHECK_PWLIB], [
--PWLIB_INCDIR=
--PWLIB_LIBDIR=
--AC_LANG_PUSH([C++])
--if test "${PWLIBDIR:-unset}" != "unset" ; then
--  AC_CHECK_HEADER(${PWLIBDIR}/version.h, HAS_PWLIB=1, )
--fi
--if test "${HAS_PWLIB:-unset}" = "unset" ; then
--  if test "${OPENH323DIR:-unset}" != "unset"; then
--    AC_CHECK_HEADER(${OPENH323DIR}/../pwlib/version.h, HAS_PWLIB=1, )
--  fi
--  if test "${HAS_PWLIB:-unset}" != "unset" ; then
--    PWLIBDIR="${OPENH323DIR}/../pwlib"
--  else
--    AC_CHECK_HEADER(${HOME}/pwlib/include/ptlib.h, HAS_PWLIB=1, )
--    if test "${HAS_PWLIB:-unset}" != "unset" ; then
--      PWLIBDIR="${HOME}/pwlib"
--    else
--      AC_CHECK_HEADER(/usr/local/include/ptlib.h, HAS_PWLIB=1, )
--      if test "${HAS_PWLIB:-unset}" != "unset" ; then
--        AC_PATH_PROG(PTLIB_CONFIG, ptlib-config, , /usr/local/bin$PATH_SEPARATOR/usr/local/share/pwlib/make)
--        PWLIB_INCDIR="/usr/local/include"
--        PWLIB_LIBDIR=`${PTLIB_CONFIG} --pwlibdir 2>/dev/null`
--        if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
--          PWLIB_LIBDIR=`${PTLIB_CONFIG} --ptlibdir 2>/dev/null`
--        fi
--        if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
--          if test "x$LIB64" != "x"; then
--            PWLIB_LIBDIR="/usr/local/lib64"
--          else
--            PWLIB_LIBDIR="/usr/local/lib"
--          fi
--        fi
--        PWLIB_LIB=`${PTLIB_CONFIG} --ldflags --libs`
--        PWLIB_LIB="-L${PWLIB_LIBDIR} `echo ${PWLIB_LIB}`"
--      else
--        AC_CHECK_HEADER(/usr/include/ptlib.h, HAS_PWLIB=1, )
--        if test "${HAS_PWLIB:-unset}" != "unset" ; then
--          AC_PATH_PROG(PTLIB_CONFIG, ptlib-config, , /usr/bin$PATH_SEPARATOR/usr/share/pwlib/make)
--          PWLIB_INCDIR="/usr/include"
--          PWLIB_LIBDIR=`${PTLIB_CONFIG} --pwlibdir 2>/dev/null`
--          if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
--            PWLIB_LIBDIR=`${PTLIB_CONFIG} --ptlibdir 2>/dev/null`
--          fi
--          if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
--            if test "x$LIB64" != "x"; then
--              PWLIB_LIBDIR="/usr/lib64"
--            else
--              PWLIB_LIBDIR="/usr/lib"
--            fi
--          fi
--          PWLIB_LIB=`${PTLIB_CONFIG} --ldflags --libs`
--          PWLIB_LIB="-L${PWLIB_LIBDIR} `echo ${PWLIB_LIB}`"
--        fi
--      fi
--    fi
--  fi
--fi
-+	PWLIB_INCDIR=
-+	PWLIB_LIBDIR=
-+	AC_LANG_PUSH([C++])
- 
--#if test "${HAS_PWLIB:-unset}" = "unset" ; then
--#  echo "Cannot find pwlib - please install or set PWLIBDIR and try again"
--#  exit
--#fi
-+	if test "${PWLIBDIR:-unset}" != "unset" ; then
-+		AC_CHECK_HEADER(${PWLIBDIR}/version.h, HAS_PWLIB=1, )
-+	fi
- 
--if test "${HAS_PWLIB:-unset}" != "unset" ; then
--  if test "${PWLIBDIR:-unset}" = "unset" ; then
--    if test "${PTLIB_CONFIG:-unset}" != "unset" ; then
--      PWLIBDIR=`$PTLIB_CONFIG --prefix`
--    else
--      echo "Cannot find ptlib-config - please install and try again"
--      exit
--    fi
--  fi
--
--  if test "x$PWLIBDIR" = "x/usr" -o "x$PWLIBDIR" = "x/usr/"; then
--    PWLIBDIR="/usr/share/pwlib"
--    PWLIB_INCDIR="/usr/include"
--    if test "x$LIB64" != "x"; then
--      PWLIB_LIBDIR="/usr/lib64"
--    else
--      PWLIB_LIBDIR="/usr/lib"
--    fi
--  fi
--  if test "x$PWLIBDIR" = "x/usr/local" -o "x$PWLIBDIR" = "x/usr/"; then
--    PWLIBDIR="/usr/local/share/pwlib"
--    PWLIB_INCDIR="/usr/local/include"
--    if test "x$LIB64" != "x"; then
--      PWLIB_LIBDIR="/usr/local/lib64"
--    else
--      PWLIB_LIBDIR="/usr/local/lib"
--    fi
--  fi
--
--  if test "${PWLIB_INCDIR:-unset}" = "unset"; then
--    PWLIB_INCDIR="${PWLIBDIR}/include"
--  fi
--  if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
--    PWLIB_LIBDIR="${PWLIBDIR}/lib"
--  fi
--
--  AC_SUBST([PWLIBDIR])
--  AC_SUBST([PWLIB_INCDIR])
--  AC_SUBST([PWLIB_LIBDIR])
--fi
--  AC_LANG_POP([C++])
-+	if test "${HAS_PWLIB:-unset}" != "unset" ; then
-+		if test "${PWLIB_INCDIR:-unset}" = "unset"; then
-+			PWLIB_INCDIR="${PWLIBDIR}/include"
+-		AC_SUBST([OPENH323_BUILD])
++		if test "${OPENH323_LIBDIR:-unset}" = "unset"; then
++			OPENH323_LIBDIR="${OPENH323DIR}/lib"
 +		fi
-+		if test "${PWLIB_LIBDIR:-unset}" = "unset"; then
-+			PWLIB_LIBDIR="${PWLIBDIR}/lib_${PWLIB_PLATFORM}"
-+		fi
-+		AC_SUBST([PWLIBDIR])
-+		AC_SUBST([PWLIB_INCDIR])
-+		AC_SUBST([PWLIB_LIBDIR])
-+	fi
-+AC_LANG_POP([C++])
- ])
- 
- AC_DEFUN([AST_CHECK_PWLIB_VERSION], [
--	if test "x$7" != "x"; then
--	   	VNAME="$7"
--       	else
--	   	VNAME="$2_VERSION"
--	fi
-+   	VNAME="$7 "
- 
- 	if test "${HAS_$2:-unset}" != "unset"; then
--		$2_VERSION=`grep "$VNAME \"" ${$2_INCDIR}/$3 | sed -e 's/[[[:space:]]]\{1,\}/ /g' | cut -f3 -d ' ' | sed -e 's/"//g'`
-+		$2_VERSION=`grep "$VNAME" ${$2_INCDIR}/$3 | sed -e 's/[[[:space:]]]\{1,\}/ /g' | cut -f3 -d ' ' | sed -e 's/"//g'`
- 		$2_MAJOR_VERSION=`echo ${$2_VERSION} | cut -f1 -d.`
- 		$2_MINOR_VERSION=`echo ${$2_VERSION} | cut -f2 -d.`
- 		$2_BUILD_NUMBER=`echo ${$2_VERSION} | cut -f3 -d.`
-@@ -227,47 +91,52 @@
- 
- AC_DEFUN([AST_CHECK_PWLIB_BUILD], [
- 	if test "${HAS_$2:-unset}" != "unset"; then
--	   AC_MSG_CHECKING($1 installation validity)
-+		AC_MSG_CHECKING($1 installation validity)
- 
--	   saved_cppflags="${CPPFLAGS}"
--	   saved_libs="${LIBS}"
--	   if test "${$2_LIB:-unset}" != "unset"; then
--	      LIBS="${LIBS} ${$2_LIB} $7"
--	   else
--    	      LIBS="${LIBS} -L${$2_LIBDIR} -l${PLATFORM_$2} $7"
--	   fi
--	   CPPFLAGS="${CPPFLAGS} -I${$2_INCDIR} $6"
-+		saved_cppflags="${CPPFLAGS}"
-+		saved_libs="${LIBS}"
- 
--	   AC_LANG_PUSH([C++])
-+		PWLIB_LIBDIR="${PWLIBDIR}/lib_${PWLIB_PLATFORM}"
-+		PWLIB_PREFIX="pt"
-+		OPENH323_LIBDIR="${OPENH323DIR}/lib"
 +		OPENH323_PREFIX="h323_${PWLIB_PLATFORM}_"
- 
--	   AC_LINK_IFELSE(
--		[AC_LANG_PROGRAM([$4],[$5])],
--		[	AC_MSG_RESULT(yes) 
--			ac_cv_lib_$2="yes" 
--		],
--		[	AC_MSG_RESULT(no) 
--			ac_cv_lib_$2="no" 
--		]
-+		$2_SUFFIX=
-+		files=`ls -l ${$2_LIBDIR}/lib${$2_PREFIX}_d.so* 2>/dev/null | wc -l 2>/dev/null`
-+		if test $files -gt 0 ; then
-+			$2_BUILD="debug"
-+			$2_SUFFIX="_d"
-+		else
-+			files=`ls -l ${$2_LIBDIR}/lib${$2_PREFIX}.so* 2>/dev/null | wc -l 2>/dev/null`
-+			if test $files -gt 0 ; then
-+				$2_BUILD="opt"
-+                       	fi
-+               	fi
-+		$2_LIB="-L${$2_LIBDIR} -l${$2_PREFIX}${$2_SUFFIX}"
-+		LIBS="${LIBS} ${$2_LIB} $7"
-+		CPPFLAGS="${CPPFLAGS} -I${$2_INCDIR} $6"
-+
-+		AC_LANG_PUSH([C++])
-+		AC_LINK_IFELSE(
-+			[AC_LANG_PROGRAM([$4],[$5])],
-+			[	AC_MSG_RESULT(yes) 
-+				ac_cv_lib_$2="yes" 
-+			],
-+			[	AC_MSG_RESULT(no) 
-+				ac_cv_lib_$2="no" 
-+			]
- 		)
-+		AC_LANG_POP([C++])
- 
--	   AC_LANG_POP([C++])
-+		LIBS="${saved_libs}"
-+		CPPFLAGS="${saved_cppflags}"
- 
--	   LIBS="${saved_libs}"
--	   CPPFLAGS="${saved_cppflags}"
--
--	   if test "${ac_cv_lib_$2}" = "yes"; then
--	      if test "${$2_LIB:-undef}" = "undef"; then
--	         if test "${$2_LIBDIR}" != "" -a "${$2_LIBDIR}" != "/usr/lib"; then
--	            $2_LIB="-L${$2_LIBDIR} -l${PLATFORM_$2}"
--	         else
--	            $2_LIB="-l${PLATFORM_$2}"
--	         fi
--	      fi
--	      if test "${$2_INCDIR}" != "" -a "${$2_INCDIR}" != "/usr/include"; then
--	         $2_INCLUDE="-I${$2_INCDIR}"
--	      fi
--	   	  PBX_$2=1
--	   	  AC_DEFINE([HAVE_$2], 1, [$3])
--	   fi
-+		if test "${ac_cv_lib_$2}" = "yes"; then
-+			if test "${$2_INCDIR}" != "" -a "${$2_INCDIR}" != "/usr/include"; then
-+				$2_INCLUDE="-I${$2_INCDIR}"
-+			fi
-+			PBX_$2=1
-+			AC_DEFINE([HAVE_$2], 1, [$3])
-+		fi
++		AC_SUBST([OPENH323_PREFIX])
++		AC_SUBST([OPENH323DIR])
++		AC_SUBST([OPENH323_INCDIR])
++		AC_SUBST([OPENH323_LIBDIR])
  	fi
++
++	AC_LANG_POP([C++])
  ])
+Index: autoconf/ast_check_h323plus.m4
+===================================================================
+--- autoconf/ast_check_h323plus.m4	(revision 0)
++++ autoconf/ast_check_h323plus.m4	(revision 0)
+@@ -0,0 +1,68 @@
++AC_DEFUN([AST_CHECK_H323PLUS], [
++	HAS_OPENH323=
++	PBX_OPENH323=
++	AC_LANG_PUSH([C++])
++	if test "${OPENH323DIR:-unset}" != "unset" ; then
++		AC_CHECK_HEADER(${OPENH323DIR}/version.h, HAS_OPENH323=1, )
++		AC_SUBST([H323_DIR],${OPENH323DIR})
++	else
++		if test "${H323PLUSDIR:-unset}" != "unset" ; then
++			AC_CHECK_HEADER(${H323PLUS3DIR}/version.h, HAS_OPENH323=1, )
++			AC_SUBST([H323_DIR],${H323PLUSDIR})
++		else
++			AC_MSG_RESULT([unavailable])
++			AC_ERROR([You need to define OPENH323DIR or H323PLUSDIR evironment variable])
++		fi
++	fi
++	AC_LANG_POP([C++])
++	if test "${HAS_OPENH323:-unset}" != "unset" -a -f "${H323_DIR}/openh323u.mak" -a -d "${H323_DIR}/lib"; then
++		AC_MSG_CHECKING([H323Plus installation])
++		PWLIBDIR=`grep -P "P[[WT]]LIBDIR\s*=\s*" "${H323_DIR}/openh323u.mak" | sed 's/^[[^=]]*=\s*//'`
++		if test -n "${PWLIBDIR}" ; then
++			PWLIB_OSTYPE_MACHTYPE=`${PWLIBDIR}/make/ptlib-config --ostype --machtype`
++			PWLIB_PLATFORM=`echo ${PWLIB_OSTYPE_MACHTYPE} | sed 's/ /_/g'`
++		else
++			AC_MSG_RESULT([unavailable])
++			AC_ERROR([Unable to find PTLib (was searching in '${PWLIBDIR}')])
++		fi
++
++		H323_LIB_SUFFIX=
++		H323_LIB_EXT=so
++		case "${OPENH323_DIR}" in
++			debug*)
++				H323_LIB_SUFFIX=_d
++			;;
++		esac
++		case "${OPENH323_DIR}" in
++			*noshared)
++				H323_LIB_SUFFIX="${H323_LIB_SUFFIX}_s"
++				H323_LIB_EXT=a
++			;;
++		esac
++
++		if test -n "${PWLIB_PLATFORM}" ; then
++			H323_LIB_FILE="libh323_${PWLIB_PLATFORM}_${H323_LIB_SUFFIX}.${H323_LIB_EXT}"
++			if test -f "${H323_DIR}/lib/${H323_LIB_FILE}" ; then
++				AC_DEFINE([HAVE_OPENH323], 1, [$3])
++				AC_SUBST([PWLIB_DIR],${PWLIBDIR})
++				AC_SUBST([PBX_OPENH323],1)
++			else
++				AC_MSG_RESULT([unavailable])
++				AC_ERROR([There is no H323Plus ${OPENH323_DIR} library file (${H323_LIB_FILE}) in ${H323_DIR}/lib])
++				AC_DEFINE([HAVE_OPENH323], 0, [$3])
++				unset H323_DIR
++			fi
++		else
++			AC_MSG_RESULT([unavailable])
++			AC_ERROR([Unable to determine PTLib platform type])
++			AC_DEFINE([HAVE_OPENH323], 0, [$3])
++			unset H323_DIR
++		fi
++		AC_MSG_RESULT([will use ${OPENH323_DIR} library for ${PWLIB_PLATFORM}])
++	else
++		AC_MSG_RESULT([unavailable])
++		AC_ERROR([Unable to find H323Plus])
++		AC_DEFINE([HAVE_OPENH323], 0, [$3])
++		unset H323_DIR
++	fi
++])
+Index: autoconf/ast_check_gnu_make.m4
+===================================================================
+--- autoconf/ast_check_gnu_make.m4	(revision 382507)
++++ autoconf/ast_check_gnu_make.m4	(working copy)
+@@ -16,5 +16,9 @@
+    AC_MSG_ERROR( *** Please install GNU make.  It is required to build Asterisk!)
+    exit 1
+ fi
++if test $((ac_cv_GNU_MAKE_VERSION_MAJOR*100 + ac_cv_GNU_MAKE_VERSION_MINOR)) -lt 382 ; then
++   AC_MSG_ERROR( *** GNU make version >= 3.82 is required to build Asterisk!)
++   exit 1
++fi
+ AC_SUBST([GNU_MAKE], [$ac_cv_GNU_MAKE])
+ ])
+Index: include/asterisk/autoconfig.h.in
+===================================================================
+--- include/asterisk/autoconfig.h.in	(revision 382507)
++++ include/asterisk/autoconfig.h.in	(working copy)
+@@ -518,7 +518,7 @@
+ /* Define to 1 if you have the OGG library. */
+ #undef HAVE_OGG
+ 
+-/* Define if your system has the OpenH323 libraries. */
++/* Define to 1 if you have the OpenH323 library. */
+ #undef HAVE_OPENH323
+ 
+ /* Define to 1 if you have the MFR2 library. */
+@@ -663,9 +663,6 @@
+ /* Define to 1 if you have the `putenv' function. */
+ #undef HAVE_PUTENV
+ 
+-/* Define if your system has the PWLib libraries. */
+-#undef HAVE_PWLIB
+-
+ /* Define to 1 if you have the Radius Client library. */
+ #undef HAVE_RADIUS
+ 
+@@ -1226,6 +1223,11 @@
+ /* Define to 1 if running on Darwin. */
+ #undef _DARWIN_UNLIMITED_SELECT
+ 
++/* Enable large inode numbers on Mac OS X 10.5.  */
++#ifndef _DARWIN_USE_64_BIT_INODE
++# define _DARWIN_USE_64_BIT_INODE 1
++#endif
++
+ /* Number of bits in a file offset, on hosts where this is settable. */
+ #undef _FILE_OFFSET_BITS
+ 
 Index: main/editline/np/fgetln.c
 ===================================================================
---- main/editline/np/fgetln.c	(revision 381155)
+--- main/editline/np/fgetln.c	(revision 382507)
 +++ main/editline/np/fgetln.c	(working copy)
 @@ -37,6 +37,7 @@
   */
@@ -3430,7 +3217,7 @@ Index: main/editline/np/fgetln.c
  #include <unistd.h>
 Index: main/editline/np/strlcpy.c
 ===================================================================
---- main/editline/np/strlcpy.c	(revision 381155)
+--- main/editline/np/strlcpy.c	(revision 382507)
 +++ main/editline/np/strlcpy.c	(working copy)
 @@ -28,6 +28,7 @@
   */
@@ -3442,7 +3229,7 @@ Index: main/editline/np/strlcpy.c
  static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
 Index: main/editline/np/strlcat.c
 ===================================================================
---- main/editline/np/strlcat.c	(revision 381155)
+--- main/editline/np/strlcat.c	(revision 382507)
 +++ main/editline/np/strlcat.c	(working copy)
 @@ -26,6 +26,7 @@
   */
