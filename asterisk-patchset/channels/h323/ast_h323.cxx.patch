@@ -1,5 +1,5 @@
 --- asterisk/channels/h323/ast_h323.cxx.orig	2011-02-03 21:22:10.000000000 +0500
-+++ asterisk/channels/h323/ast_h323.cxx	2013-02-11 16:57:52.000000000 +0600
++++ asterisk/channels/h323/ast_h323.cxx	2013-03-14 16:09:40.000000000 +0600
 @@ -80,6 +80,7 @@
  #include "asterisk/logger.h"
  #include "asterisk/channel.h"
