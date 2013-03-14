@@ -1,1 +1,1 @@
-m4 autoconf pkg-config
+make m4 autoconf pkg-config
