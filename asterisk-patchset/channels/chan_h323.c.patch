@@ -1,5 +1,5 @@
 --- asterisk/channels/chan_h323.c.orig	2012-05-15 01:44:27.000000000 +0600
-+++ asterisk/channels/chan_h323.c	2013-03-14 22:17:07.000000000 +0600
++++ asterisk/channels/chan_h323.c	2013-07-22 10:47:00.000000000 +0600
 @@ -29,16 +29,14 @@
   *
   * \par See also
