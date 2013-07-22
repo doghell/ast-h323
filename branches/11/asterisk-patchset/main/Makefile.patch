@@ -1,5 +1,5 @@
---- asterisk/main/Makefile.orig	2012-09-14 02:04:51.000000000 +0600
-+++ asterisk/main/Makefile	2013-03-14 22:17:07.000000000 +0600
+--- asterisk/main/Makefile.orig	2013-02-27 01:19:51.000000000 +0600
++++ asterisk/main/Makefile	2013-07-22 10:47:00.000000000 +0600
 @@ -164,8 +164,9 @@
  AST_EMBED_LIBS:=$(foreach dep,$(EMBED_LIBS),$(value $(dep)))
  OBJS:=$(sort $(OBJS))

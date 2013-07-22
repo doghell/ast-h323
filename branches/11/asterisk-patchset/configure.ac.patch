@@ -1,5 +1,5 @@
---- asterisk/configure.ac.orig	2012-10-19 02:02:02.000000000 +0600
-+++ asterisk/configure.ac	2013-03-14 22:17:07.000000000 +0600
+--- asterisk/configure.ac.orig	2013-05-15 18:39:55.000000000 +0600
++++ asterisk/configure.ac	2013-07-22 10:47:00.000000000 +0600
 @@ -395,7 +395,7 @@
  AST_EXT_LIB_SETUP([ILBC], [System iLBC], [ilbc], [, use 'internal' iLBC otherwise])
  AST_EXT_LIB_SETUP([GTK2], [gtk2], [gtk2])
@@ -17,7 +17,7 @@
  AST_EXT_LIB_SETUP([RADIUS], [Radius Client], [radius])
  AST_EXT_LIB_SETUP([RESAMPLE], [LIBRESAMPLE], [resample])
  AST_EXT_LIB_SETUP([SDL], [Sdl], [sdl])
-@@ -2018,40 +2017,13 @@
+@@ -2052,40 +2051,13 @@
  
  AST_EXT_LIB_CHECK([OPENR2], [openr2], [openr2_chan_new], [openr2.h])
  
@@ -64,7 +64,7 @@
  fi
  
  AST_EXT_LIB_CHECK([LUA], [lua5.1], [luaL_newstate], [lua5.1/lua.h], [-lm])
-@@ -2322,7 +2294,7 @@
+@@ -2361,7 +2333,7 @@
  	touch makeopts.acbak
  fi
  
