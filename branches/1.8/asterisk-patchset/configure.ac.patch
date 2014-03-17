@@ -1,5 +1,5 @@
---- asterisk/configure.ac.orig	2013-05-15 18:37:29.000000000 +0600
-+++ asterisk/configure.ac	2013-08-28 17:39:46.000000000 +0600
+--- asterisk/configure.ac.orig	2014-01-08 22:00:22.000000000 +0600
++++ asterisk/configure.ac	2014-03-17 14:34:16.512851695 +0600
 @@ -376,7 +376,7 @@
  AST_EXT_LIB_SETUP([GSM], [External GSM], [gsm], [, use 'internal' GSM otherwise])
  AST_EXT_LIB_SETUP([GTK2], [gtk2], [gtk2])
@@ -17,7 +17,7 @@
  AST_EXT_LIB_SETUP([RADIUS], [Radius Client], [radius])
  AST_EXT_LIB_SETUP([RESAMPLE], [LIBRESAMPLE], [resample])
  AST_EXT_LIB_SETUP([SDL], [Sdl], [sdl])
-@@ -1921,40 +1920,13 @@
+@@ -1938,40 +1937,13 @@
  
  AST_EXT_LIB_CHECK([OPENR2], [openr2], [openr2_chan_new], [openr2.h])
  
@@ -63,8 +63,8 @@
 +	AC_SUBST([OPENH323_BUILD])
  fi
  
- AST_EXT_LIB_CHECK([LUA], [lua5.1], [luaL_newstate], [lua5.1/lua.h], [-lm]) 
-@@ -2262,7 +2234,7 @@
+ AST_EXT_LIB_CHECK([LUA], [lua5.2], [luaL_newstate], [lua5.2/lua.h], [-lm])
+@@ -2288,7 +2260,7 @@
  	touch makeopts.acbak
  fi
  
