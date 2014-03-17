@@ -1,5 +1,5 @@
---- asterisk/channels/chan_h323.c.orig	2012-05-15 01:44:27.000000000 +0600
-+++ asterisk/channels/chan_h323.c	2013-07-22 10:47:00.000000000 +0600
+--- asterisk/channels/chan_h323.c.orig	2013-09-06 21:58:04.000000000 +0600
++++ asterisk/channels/chan_h323.c	2014-03-17 14:48:33.173504625 +0600
 @@ -29,16 +29,14 @@
   *
   * \par See also
@@ -112,17 +112,6 @@
  };
  
  static const char* redirectingreason2str(int redirectingreason)
-@@ -346,8 +384,8 @@
- 		if (h323debug)
- 			ast_debug(1, "Preparing %s for new native format\n", ast_channel_name(c));
- 		ast_format_cap_from_old_bitfield(ast_channel_nativeformats(c), pvt->nativeformats);
--		ast_set_read_format(c, &c->readformat);
--		ast_set_write_format(c, &c->writeformat);
-+		ast_set_read_format(c, ast_channel_readformat(c));
-+		ast_set_write_format(c, ast_channel_writeformat(c));
- 	}
- 	if (pvt->needhangup) {
- 		if (h323debug)
 @@ -461,6 +499,11 @@
  		ast_rtp_instance_destroy(pvt->rtp);
  	}
@@ -144,17 +133,6 @@
  	const char *addr;
  	char called_addr[1024];
  
-@@ -787,8 +830,8 @@
- 
- 				pvt->nativeformats = ast_format_to_old_bitfield(&f->subclass.format);
- 
--				ast_set_read_format(pvt->owner, &pvt->owner->readformat);
--				ast_set_write_format(pvt->owner, &pvt->owner->writeformat);
-+				ast_set_read_format(pvt->owner, ast_channel_readformat(pvt->owner));
-+				ast_set_write_format(pvt->owner, ast_channel_writeformat(pvt->owner));
- 				ast_channel_unlock(pvt->owner);
- 			}
- 			/* Do in-band DTMF detection */
 @@ -817,7 +860,7 @@
  static struct ast_frame *oh323_read(struct ast_channel *c)
  {
@@ -193,16 +171,7 @@
  		} else {
  			ast_log(LOG_WARNING, "Can't send %d type frames with H323 write\n", frame->frametype);
  			return 0;
-@@ -854,7 +912,7 @@
- 		if (!(ast_format_cap_iscompatible(ast_channel_nativeformats(c), &frame->subclass.format))) {
- 			char tmp[256];
- 			ast_log(LOG_WARNING, "Asked to transmit frame type '%s', while native formats is '%s' (read/write = %s/%s)\n",
--				ast_getformatname(&frame->subclass.format), ast_getformatname_multiple(tmp, sizeof(tmp), ast_channel_nativeformats(c)), ast_getformatname(&c->readformat), ast_getformatname(&c->writeformat));
-+				ast_getformatname(&frame->subclass.format), ast_getformatname_multiple(tmp, sizeof(tmp), ast_channel_nativeformats(c)), ast_getformatname(ast_channel_readformat(c)), ast_getformatname(ast_channel_writeformat(c)));
- 			return 0;
- 		}
- 	}
-@@ -868,6 +926,120 @@
+@@ -871,6 +929,120 @@
  	return res;
  }
  
@@ -323,7 +292,7 @@
  static int oh323_indicate(struct ast_channel *c, int condition, const void *data, size_t datalen)
  {
  
-@@ -876,6 +1048,9 @@
+@@ -879,6 +1051,9 @@
  	int res = -1;
  	int got_progress;
  
@@ -333,7 +302,7 @@
  	ast_mutex_lock(&pvt->lock);
  	token = (pvt->cd.call_token ? ast_strdup(pvt->cd.call_token) : NULL);
  	got_progress = pvt->got_progress;
-@@ -944,6 +1119,14 @@
+@@ -947,6 +1122,14 @@
  	case AST_CONTROL_PVT_CAUSE_CODE:
  	case -1:
  		break;
@@ -348,7 +317,7 @@
  	default:
  		ast_log(LOG_WARNING, "OH323: Don't know how to indicate condition %d on %s\n", condition, token);
  		break;
-@@ -981,7 +1164,7 @@
+@@ -984,7 +1167,7 @@
  
  	{
  		struct ast_sockaddr tmp;
@@ -357,7 +326,7 @@
  		ast_sockaddr_from_sin(&tmp, &bindaddr);
  		if (ast_find_ourip(&our_addr, &tmp, AF_INET)) {
  			ast_mutex_unlock(&pvt->lock);
-@@ -1025,6 +1208,43 @@
+@@ -1028,6 +1211,43 @@
  	return 0;
  }
  
@@ -401,22 +370,7 @@
  /*! \brief Private structure should be locked on a call */
  static struct ast_channel *__oh323_new(struct oh323_pvt *pvt, int state, const char *host, const char *linkedid)
  {
-@@ -1061,10 +1281,10 @@
- 
- 		pvt->nativeformats = ast_format_cap_to_old_bitfield(ast_channel_nativeformats(ch));
- 		ast_best_codec(ast_channel_nativeformats(ch), &tmpfmt);
--		ast_format_copy(&ch->writeformat, &tmpfmt);
--		ast_format_copy(&ch->rawwriteformat, &tmpfmt);
--		ast_format_copy(&ch->readformat, &tmpfmt);
--		ast_format_copy(&ch->rawreadformat, &tmpfmt);
-+		ast_format_copy(ast_channel_writeformat(ch), &tmpfmt);
-+		ast_format_copy(ast_channel_rawwriteformat(ch), &tmpfmt);
-+		ast_format_copy(ast_channel_readformat(ch), &tmpfmt);
-+		ast_format_copy(ast_channel_rawreadformat(ch), &tmpfmt);
- 		if (!pvt->rtp)
- 			__oh323_rtp_create(pvt);
- #if 0
-@@ -1077,11 +1297,15 @@
+@@ -1080,11 +1300,15 @@
  			ast_channel_set_fd(ch, 3, ast_rtp_instance_fd(pvt->vrtp, 1));
  		}
  #endif
@@ -434,7 +388,7 @@
  		if (state == AST_STATE_RING) {
  			ast_channel_rings_set(ch, 1);
  		}
-@@ -1157,7 +1381,13 @@
+@@ -1160,7 +1384,13 @@
  		}
  		if (!pvt->cd.call_token) {
  			ast_log(LOG_ERROR, "Not enough memory to alocate call token\n");
@@ -449,7 +403,7 @@
  			ast_free(pvt);
  			return NULL;
  		}
-@@ -1173,6 +1403,7 @@
+@@ -1176,6 +1406,7 @@
  	}
  	ast_copy_string(pvt->context, default_context, sizeof(pvt->context));
  	pvt->newstate = pvt->newcontrol = pvt->newdigit = pvt->update_rtp_info = pvt->DTMFsched = -1;
@@ -457,7 +411,7 @@
  	ast_mutex_init(&pvt->lock);
  	/* Add to interface list */
  	ast_mutex_lock(&iflock);
-@@ -1208,6 +1439,47 @@
+@@ -1211,6 +1442,47 @@
  	return NULL;
  }
  
@@ -505,7 +459,7 @@
  static int update_state(struct oh323_pvt *pvt, int state, int signal)
  {
  	if (!pvt)
-@@ -1368,14 +1640,26 @@
+@@ -1371,14 +1643,26 @@
  		options->silenceSuppression = ast_true(v->value);
  	} else if (!strcasecmp(v->name, "progress_setup")) {
  		tmp = atoi(v->value);
@@ -534,7 +488,7 @@
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d, assuming 0\n", v->value, v->name, v->lineno);
  			tmp = 0;
  		}
-@@ -1397,6 +1681,19 @@
+@@ -1400,6 +1684,19 @@
  			options->tunnelOptions |= H323_TUNNEL_QSIG;
  		else
  			ast_log(LOG_WARNING, "Invalid value %s for %s at line %d\n", v->value, v->name, v->lineno);
@@ -554,7 +508,7 @@
  	} else if (!strcasecmp(v->name, "hold")) {
  		if (!strcasecmp(v->value, "none"))
  			options->holdHandling = ~0;
-@@ -1464,8 +1761,8 @@
+@@ -1467,8 +1764,8 @@
  				return NULL;
  			} else {
  				struct ast_sockaddr tmp;
@@ -564,7 +518,7 @@
  				if (ast_get_ip(&tmp, v->value)) {
  					ASTOBJ_UNREF(user, oh323_destroy_user);
  					return NULL;
-@@ -1584,8 +1881,8 @@
+@@ -1587,8 +1884,8 @@
  			}
  			{
  				struct ast_sockaddr tmp;
@@ -574,22 +528,7 @@
  				if (ast_get_ip(&tmp, v->value)) {
  					ast_log(LOG_ERROR, "Could not determine IP for %s\n", v->value);
  					ASTOBJ_UNREF(peer, oh323_destroy_peer);
-@@ -2079,11 +2376,11 @@
- 			if (!(ast_format_cap_identical(ast_channel_nativeformats(pvt->owner), pvt_native))) {
- 				if (h323debug) {
- 					char tmp[256], tmp2[256];
--					ast_debug(1, "Native format changed to '%s' from '%s', read format is %s, write format is %s\n", ast_getformatname_multiple(tmp, sizeof(tmp), pvt_native), ast_getformatname_multiple(tmp2, sizeof(tmp2), ast_channel_nativeformats(pvt->owner)), ast_getformatname(&pvt->owner->readformat), ast_getformatname(&pvt->owner->writeformat));
-+					ast_debug(1, "Native format changed to '%s' from '%s', read format is %s, write format is %s\n", ast_getformatname_multiple(tmp, sizeof(tmp), pvt_native), ast_getformatname_multiple(tmp2, sizeof(tmp2), ast_channel_nativeformats(pvt->owner)), ast_getformatname(ast_channel_readformat(pvt->owner)), ast_getformatname(ast_channel_writeformat(pvt->owner)));
- 				}
- 				ast_format_cap_copy(ast_channel_nativeformats(pvt->owner), pvt_native);
--				ast_set_read_format(pvt->owner, &pvt->owner->readformat);
--				ast_set_write_format(pvt->owner, &pvt->owner->writeformat);
-+				ast_set_read_format(pvt->owner, ast_channel_readformat(pvt->owner));
-+				ast_set_write_format(pvt->owner, ast_channel_writeformat(pvt->owner));
- 			}
- 			if (pvt->options.progress_audio)
- 				ast_queue_control(pvt->owner, AST_CONTROL_PROGRESS);
-@@ -2119,6 +2416,129 @@
+@@ -2126,6 +2423,129 @@
  	return;
  }
  
@@ -719,7 +658,7 @@
  /*! \brief
    *	Call-back function to signal asterisk that the channel has been answered
    * Returns nothing
-@@ -2449,6 +2869,11 @@
+@@ -2456,6 +2876,11 @@
  		ast_rtp_instance_destroy(pvt->rtp);
  		pvt->rtp = NULL;
  	}
@@ -731,7 +670,7 @@
  	/* Free dsp used for in-band DTMF detection */
  	if (pvt->vad) {
  		ast_dsp_free(pvt->vad);
-@@ -2516,16 +2941,17 @@
+@@ -2523,16 +2948,17 @@
  		ast_debug(1, "DTMF payload on %s set to %d\n", token, payload);
  }
  
@@ -752,7 +691,7 @@
  	pvt->peercapability = capabilities;
  	pvt->jointcapability = pvt->options.capability & capabilities;
  	if (prefs) {
-@@ -2548,7 +2974,32 @@
+@@ -2555,7 +2981,32 @@
  			}
  		}
  	}
@@ -785,7 +724,7 @@
  }
  
  static void set_local_capabilities(unsigned call_reference, const char *token)
-@@ -2556,19 +3007,39 @@
+@@ -2563,19 +3014,39 @@
  	struct oh323_pvt *pvt;
  	int capability, dtmfmode, pref_codec;
  	struct ast_codec_pref prefs;
@@ -827,7 +766,7 @@
  
  	if (h323debug) {
  		int i;
-@@ -3033,6 +3504,7 @@
+@@ -3040,6 +3511,7 @@
  				ast_log(LOG_WARNING, "Invalid address: %s\n", v->value);
  			} else {
  				memcpy(&bindaddr.sin_addr, hp->h_addr, sizeof(bindaddr.sin_addr));
@@ -835,7 +774,7 @@
  			}
  		} else if (!strcasecmp(v->name, "tos")) {	/* Needs to be removed in next release */
  			ast_log(LOG_WARNING, "The \"tos\" setting is deprecated in this version of Asterisk. Please change to \"tos_audio\".\n");
-@@ -3220,7 +3692,7 @@
+@@ -3227,7 +3699,7 @@
  	struct oh323_pvt *pvt;
  	enum ast_rtp_glue_result res = AST_RTP_GLUE_RESULT_LOCAL;
  
@@ -844,7 +783,7 @@
  		return AST_RTP_GLUE_RESULT_FORBID;
  
  	ast_mutex_lock(&pvt->lock);
-@@ -3307,6 +3779,22 @@
+@@ -3314,6 +3786,22 @@
  	.update_peer = oh323_set_rtp_peer,
  };
  
@@ -867,7 +806,7 @@
  static enum ast_module_load_result load_module(void)
  {
  	int res;
-@@ -3366,6 +3854,8 @@
+@@ -3373,6 +3861,8 @@
  
  		ast_rtp_glue_register(&oh323_rtp_glue);
  
@@ -876,7 +815,7 @@
  		/* Register our callback functions */
  		h323_callback_register(setup_incoming_call,
  						setup_outgoing_call,
-@@ -3380,7 +3870,6 @@
+@@ -3387,7 +3877,6 @@
  						set_dtmf_payload,
  						hangup_connection,
  						set_local_capabilities,
@@ -884,7 +823,7 @@
  						remote_hold);
  		/* start the h.323 listener */
  		if (h323_start_listener(h323_signalling_port, bindaddr)) {
-@@ -3490,7 +3979,7 @@
+@@ -3497,7 +3986,7 @@
  	return 0;
  }
  
