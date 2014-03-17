@@ -1,10 +1,13 @@
 [ -h asterisk ] && echo "Already exists" && exit
-if [ ! -d asterisk-svn_r383058 ]; then
-	svn checkout -r 383058 http://svn.asterisk.org/svn/asterisk/trunk asterisk-svn_r383058 || exit 1
-	rm -vf asterisk-svn_r383058/configure || exit 1
+if [ ! -d asterisk-12.1.1 ]; then
+	if [ ! -f asterisk-12.1.1.tar.gz ]; then
+		wget http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-12.1.1.tar.gz || exit 1
+	fi
+	tar xvzf asterisk-12.1.1.tar.gz || exit 1
+	rm -vf asterisk-12.1.1/configure || exit 1
 fi
-if [ -d asterisk-svn_r383058 ]; then
-	ln -svnf asterisk-svn_r383058 asterisk
+if [ -d asterisk-12.1.1 ]; then
+	ln -svnf asterisk-12.1.1 asterisk
 else
 	exit 1
 fi
