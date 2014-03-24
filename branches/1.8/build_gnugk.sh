@@ -31,4 +31,4 @@ cd "${SRC_BASE}/gnugk"
 	--disable-unixodbc \
 	--disable-sqlite \
 	--with-large-fdset=8192 && \
-make ${BUILD_TYPE}
+${MAKE_CMD} ${BUILD_TYPE}

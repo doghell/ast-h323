@@ -8,4 +8,4 @@ cd "${SRC_BASE}/autoconf"
 
 ./configure \
         ${INSTALL_PREFIX} && \
-make
+${MAKE_CMD}

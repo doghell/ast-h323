@@ -13,4 +13,4 @@ cd "${SRC_BASE}/spandsp"
 
 ./configure \
 	${INSTALL_PREFIX} && \
-make
+${MAKE_CMD}

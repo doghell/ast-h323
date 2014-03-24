@@ -8,4 +8,4 @@ cd "${SRC_BASE}/m4"
 
 ./configure \
         ${INSTALL_PREFIX} && \
-make
+${MAKE_CMD}
