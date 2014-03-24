@@ -17,4 +17,4 @@ cd "${SRC_BASE}/asterisk-sccp"
 ./configure \
 	${INSTALL_PREFIX} \
 	--with-asterisk=${ASTERISKDIR} && \
-make
+${MAKE_CMD}
