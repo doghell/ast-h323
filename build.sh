@@ -5,6 +5,8 @@ PACKAGE_LIST=$1
 [ -f "${SRC_BASE}/$0" ] || SRC_BASE=`dirname $0`
 [ -n "${PACKAGE_LIST}" ] || PACKAGE_LIST=`cat ${SRC_BASE}/package_list`
 
+. "${SRC_BASE}/os_info.sh"
+
 export PATH="${HOME}/bin:${PATH}"
 
 for PACKAGE in ${PACKAGE_LIST}; do
