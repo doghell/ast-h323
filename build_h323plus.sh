@@ -35,4 +35,4 @@ cd "${SRC_BASE}/h323plus"
 	--enable-h460p \
 	--disable-gnugk \
 	--enable-spandsp && \
-gmake ${BUILD_TYPE}
+${MAKE_CMD} ${BUILD_TYPE}
