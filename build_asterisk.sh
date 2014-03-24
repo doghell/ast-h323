@@ -34,4 +34,4 @@ fi
 	${INSTALL_PREFIX} \
 	--with-spandsp \
 	--with-h323=${BUILD_TYPE} && \
-gmake
+${MAKE_CMD}

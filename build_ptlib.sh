@@ -18,4 +18,4 @@ cd "${SRC_BASE}/ptlib"
 	--disable-oss \
 	--disable-v4l \
 	--disable-v4l2 && \
-gmake ${BUILD_TYPE}
+${MAKE_CMD} ${BUILD_TYPE}
