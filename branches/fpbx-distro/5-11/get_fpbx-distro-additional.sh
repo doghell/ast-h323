@@ -57,4 +57,4 @@ for FPBX_BUILD_DEP in ${FPBX_BUILD_DEPS}; do
 	[ -n "${FPBX_BUILD_DEP_INST}" ] && FPBX_BUILD_DEP_INST="${FPBX_BUILD_DEP_INST} "
 done
 
-[ -z "${FPBX_BUILD_DEP_INST}" ] || yum install -y ${FPBX_BUILD_DEP_INST} || exit 1
+[ -z "${FPBX_BUILD_DEP_INST}" ] || yum install -y ${FPBX_BUILD_DEP_INST}

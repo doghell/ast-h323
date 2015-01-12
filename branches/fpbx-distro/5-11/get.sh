@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export SRC_BASE=`pwd`
+BUILD_BASE=~/rpmbuild/BUILD
+SRC_BASE=`pwd`
 [ -f "${SRC_BASE}/$0" ] || SRC_BASE=`dirname $0`
 
 PACKAGE_LIST=$1
@@ -11,8 +12,10 @@ else
 fi
 
 export PATH=${HOME}/bin:${PATH}
+export BUILD_BASE SRC_BASE
 
 for PACKAGE in ${PACKAGE_LIST}; do
+	cd $SRC_BASE
 	if [ -x "${SRC_BASE}/get_${PACKAGE}${GET_LATEST}.sh" ]; then
 		echo -e "\nFetching '${PACKAGE}'...\n"
 		${SRC_BASE}/get_${PACKAGE}${GET_LATEST}.sh
