@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export BUILD_BASE=~/rpmbuild/BUILD
 export SRC_BASE=`pwd`
 [ -f "${SRC_BASE}/$0" ] || SRC_BASE=`dirname $0`
 
@@ -24,7 +25,7 @@ fi
 ${SRC_BASE}/build-debug.sh || exit 1
 
 if [ -x "${SRC_BASE}/pre-install-packages.sh" ]; then
-	${SRC_BASE}/pre-install-packages.sh || exit 1
+	${SRC_BASE}/pre-install-packages.sh debug || exit 1
 fi
 
 ${SRC_BASE}/install.sh

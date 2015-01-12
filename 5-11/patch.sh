@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export BUILD_BASE=~/rpmbuild/BUILD
 export SRC_BASE=`pwd`
 [ -f "${SRC_BASE}/$0" ] || SRC_BASE=`dirname $0`
 PACKAGE_LIST=$1
@@ -8,8 +9,8 @@ if [ -z "${PACKAGE_LIST}" ]; then
 fi
 
 for PACKAGE in ${PACKAGE_LIST}; do
-	[ -d "${SRC_BASE}/${PACKAGE}" ] || exit 1
-	if [ -d "${SRC_BASE}/${PACKAGE}-patchset" -a ! -f "${SRC_BASE}/${PACKAGE}/.patchset_applied" ]; then
+	cd $SRC_BASE
+	if [ -d "${SRC_BASE}/${PACKAGE}-patchset" ]; then
 		if [ -x "${SRC_BASE}/patch_${PACKAGE}.sh" ]; then
 			${SRC_BASE}/patch_${PACKAGE}.sh || exit 1
 		else
@@ -23,6 +24,5 @@ for PACKAGE in ${PACKAGE_LIST}; do
 				patch -bENp0 ${ORIGINAL} < ${PATCH} || exit 1
 			done
 		fi
-		touch "${SRC_BASE}/${PACKAGE}/.patchset_applied"
 	fi
 done
